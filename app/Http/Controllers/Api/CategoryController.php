@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class CategoryController extends BaseController
 {
@@ -21,7 +23,22 @@ class CategoryController extends BaseController
 
     public function store(CategoryRequest $request)
     {
-        $category = Category::create($request->all());
+        $categoryData = $request->except('image');
+        $category = Category::create($categoryData);
+
+        $image = $request->image;
+        if ($image) {
+            $imageName = Str::random(10) . '.' . $image->extension();
+            $imagePath = $image->storeAs('public/upload/' . date('Y/m/d'), $imageName);
+            $imageUrl = Storage::url($imagePath);
+
+            $category->update([
+                'image' => $imageName,
+                'path' => $imagePath,
+                'url' => $imageUrl,
+            ]);
+        }
+
         return $this->handleResponse($category, 'Category created successfully');
     }
 
@@ -34,13 +51,33 @@ class CategoryController extends BaseController
 
     public function update(CategoryRequest $request, Category $category)
     {
-        $category->update($request->all());
+        $categoryData = $request->except('image');
+
+        $image = $request->image;
+        if ($image) {
+            $imageName = Str::random(10) . '.' . $image->extension();
+            $imagePath = $image->storeAs('public/upload/' . date('Y/m/d'), $imageName);
+            $imageUrl = Storage::url($imagePath);
+
+            if ($category->image) {
+                Storage::delete($category->path);
+            }
+
+            $categoryData['image'] = $imageName;
+            $categoryData['path'] = $imagePath;
+            $categoryData['url'] = $imageUrl;
+        }
+
+        $category->update($categoryData);
         return $this->handleResponse($category, 'Category update successfully!');
     }
 
 
     public function destroy(Category $category)
     {
+        if ($category->image) {
+            Storage::delete($category->path);
+        }
         $category->delete();
         return $this->handleResponse(Null, 'Category delete successfully!');
     }

@@ -23,6 +23,7 @@ class CategoryRequest extends FormRequest
             'slug' => 'string|unique:categories,slug',
             'type' => 'string',
             'status' => 'in:active,inactive',
+            'image' => 'image|mimes:jpg,png,svg|max:10240',
         ];
     }
 
