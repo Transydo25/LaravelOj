@@ -10,10 +10,6 @@ use Illuminate\Support\Facades\Storage;
 
 class CategoryController extends BaseController
 {
-    public function __construct()
-    {
-        $this->middleware('auth:api');
-    }
 
     public function index()
     {
@@ -24,21 +20,17 @@ class CategoryController extends BaseController
     public function store(CategoryRequest $request)
     {
         $categoryData = $request->except('image');
-        $category = Category::create($categoryData);
-
         $image = $request->image;
         if ($image) {
             $imageName = Str::random(10) . '.' . $image->extension();
             $imagePath = $image->storeAs('public/upload/' . date('Y/m/d'), $imageName);
             $imageUrl = Storage::url($imagePath);
 
-            $category->update([
-                'image' => $imageName,
-                'path' => $imagePath,
-                'url' => $imageUrl,
-            ]);
+            $categoryData['image'] = $imageName;
+            $categoryData['path'] = $imagePath;
+            $categoryData['url'] = $imageUrl;
         }
-
+        $category = Category::create($categoryData);
         return $this->handleResponse($category, 'Category created successfully');
     }
 

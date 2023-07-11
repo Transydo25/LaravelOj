@@ -37,7 +37,7 @@ Route::group([
 
 //Media
 Route::group([
-    'middleware' => 'api',
+    'middleware' => 'auth:api',
     'prefix' => 'media'
 ], function () {
     Route::get('/', [MediaController::class, 'index'])->name('media.index');
@@ -49,7 +49,7 @@ Route::group([
 
 //Category
 Route::group([
-    'middleware' => 'api',
+    'middleware' => 'auth:api',
     'prefix' => 'category'
 ], function () {
     Route::get('/', [CategoryController::class, 'index'])->name('category.index');

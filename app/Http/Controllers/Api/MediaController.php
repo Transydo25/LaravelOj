@@ -13,10 +13,6 @@ use App\Http\Controllers\BaseController;
 
 class MediaController extends BaseController
 {
-    public function __construct()
-    {
-        $this->middleware('auth:api');
-    }
 
     private function generateImageName($extension)
     {
