@@ -31,11 +31,13 @@ class CategoryController extends BaseController
             'status.*' => 'A status is in: active, inactive',
             'image.*' => 'Image is a file, type of: jpg, svg, png and not greater than 10Mb',
         ]);
+
         $categoryData = $request->except('image');
         $slug = Str::slug($request->name);
         $categoryData['slug'] = $slug;
         $user = Auth::user();
         $categoryData['author'] = $user->email;
+
         $image = $request->image;
         if ($image) {
             $imageName = Str::random(10) . '.' . $image->extension();
@@ -68,9 +70,11 @@ class CategoryController extends BaseController
             'status.*' => 'A status is in: active, inactive',
             'image.*' => 'Image is a file, type of: jpg, svg, png and not greater than 10Mb',
         ]);
+
         $categoryData = $request->except('image');
         $user = Auth::user();
         $categoryData['author'] = $user->email;
+
         $image = $request->image;
         if ($image) {
             $imageName = Str::random(10) . '.' . $image->extension();
