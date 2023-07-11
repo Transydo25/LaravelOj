@@ -18,21 +18,20 @@ class CategoryRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'string|max:255',
+            'name' => 'required|string|max:255',
             'description' => 'string',
-            'slug' => 'string|unique:categories,slug',
             'type' => 'string',
             'status' => 'in:active,inactive',
             'image' => 'image|mimes:jpg,png,svg|max:10240',
         ];
     }
 
-    protected function failedValidation(Validator $validator)
+    public function messages()
     {
-        throw new HttpResponseException(response()->json([
-            'status' => 'error',
-            'message' => $validator->errors()->first(),
-            'errors' => $validator->errors(),
-        ], 422));
+        return [
+            'name.*' => 'A name is required, must be a string and not greater than 255 character.',
+            'status.*' => 'Status must be either "active" or "inactive".',
+            'image.*' => 'Image must be an image file file type: jpg, png, svg, and not greater than 10Mb.',
+        ];
     }
 }

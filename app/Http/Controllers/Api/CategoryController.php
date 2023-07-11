@@ -16,39 +16,29 @@ class CategoryController extends BaseController
 
     public function index()
     {
-        $category = Category::all();
-        return $this->handleResponse($category, 'Category data');
+        $categories = Category::all();
+        return $this->handleResponse($categories, 'Categories data');
     }
 
-    public function store(Request $request)
+    public function store(CategoryRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'status' => 'in:active,inactive',
-            'image' => 'image|mimes:jpg,png,svg|max:10240',
-        ], [
-            'name.*' => 'A name is required, must be a string, not greater than 255 characters',
-            'status.*' => 'A status is in: active, inactive',
-            'image.*' => 'Image is a file, type of: jpg, svg, png and not greater than 10Mb',
-        ]);
-
-        $categoryData = $request->except('image');
         $slug = Str::slug($request->name);
-        $categoryData['slug'] = $slug;
-        $user = Auth::user();
-        $categoryData['author'] = $user->email;
-
+        $user_id = Auth::id();
         $image = $request->image;
+        $category = new Category();
+
+        $category->fill($request->all());
+        $category->slug = $slug;
+        $category->author = $user_id;
         if ($image) {
-            $imageName = Str::random(10) . '.' . $image->extension();
+            $imageName = Str::random(10);
             $imagePath = $image->storeAs('public/upload/' . date('Y/m/d'), $imageName);
             $imageUrl = asset(Storage::url($imagePath));
 
-            $categoryData['image'] = $imageName;
-            $categoryData['path'] = $imagePath;
-            $categoryData['url'] = $imageUrl;
+            $category->url = $imageUrl;
         }
-        $category = Category::create($categoryData);
+
+        $category->save();
         return $this->handleResponse($category, 'Category created successfully');
     }
 
@@ -59,44 +49,35 @@ class CategoryController extends BaseController
     }
 
 
-    public function update(Request $request, Category $category)
+    public function update(CategoryRequest $request, Category $category)
     {
-        $request->validate([
-            'name' => 'string|max:255',
-            'status' => 'in:active,inactive',
-            'image' => 'image|mimes:jpg,png,svg|max:10240',
-        ], [
-            'name.*' => 'A name must be a string, not greater than 255 characters',
-            'status.*' => 'A status is in: active, inactive',
-            'image.*' => 'Image is a file, type of: jpg, svg, png and not greater than 10Mb',
-        ]);
-
-        $categoryData = $request->except('image');
-
+        $slug = Str::slug($request->name);
+        $user_id = Auth::id();
         $image = $request->image;
+
+        $category->fill($request->all());
+        $category->slug = $slug;
+        $category->author = $user_id;
         if ($image) {
-            $imageName = Str::random(10) . '.' . $image->extension();
+            if ($category->url) {
+                $path = 'public' . Str::after($category->url, 'storage');
+                Storage::delete($path);
+            }
+            $imageName = Str::random(10);
             $imagePath = $image->storeAs('public/upload/' . date('Y/m/d'), $imageName);
             $imageUrl = asset(Storage::url($imagePath));
-
-            if ($category->image) {
-                Storage::delete($category->path);
-            }
-
-            $categoryData['image'] = $imageName;
-            $categoryData['path'] = $imagePath;
-            $categoryData['url'] = $imageUrl;
+            $category->url = $imageUrl;
         }
-
-        $category->update($categoryData);
+        $category->save();
         return $this->handleResponse($category, 'Category update successfully!');
     }
 
 
     public function destroy(Category $category)
     {
-        if ($category->image) {
-            Storage::delete($category->path);
+        if ($category->url) {
+            $path = 'public' . Str::after($category->url, 'storage');
+            Storage::delete($path);
         }
         $category->delete();
         return $this->handleResponse([], 'Category delete successfully!');
