@@ -43,8 +43,6 @@ class CategoryController extends BaseController
 
     public function update(CategoryRequest $request, Category $category)
     {
-        $categoryData = $request->except('image');
-
         $image = $request->image;
         if ($image) {
             $imageName = Str::random(10) . '.' . $image->extension();
