@@ -72,8 +72,6 @@ class CategoryController extends BaseController
         ]);
 
         $categoryData = $request->except('image');
-        $user = Auth::user();
-        $categoryData['author'] = $user->email;
 
         $image = $request->image;
         if ($image) {
