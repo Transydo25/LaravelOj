@@ -33,7 +33,7 @@ class RouteServiceProvider extends ServiceProvider
                 ->group(base_path('routes/web.php'));
 
             Route::prefix('api')
-                ->middleware('api')
+                ->middleware('api') //jwt new
                 ->group(base_path('routes/api.php'));
         });
     }
