@@ -43,7 +43,7 @@ class CategoryController extends BaseController
 
     public function update(CategoryRequest $request, Category $category)
     {
-        $categoryData = $request;
+        $categoryData = $request->except('image');
 
         $image = $request->image;
         if ($image) {
