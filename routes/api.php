@@ -49,7 +49,7 @@ Route::group([
 
 //Category
 Route::group([
-    'middleware' => 'auth:api',
+    'middleware' => ['jwt.verify', 'auth:api'],
     'prefix' => 'category'
 ], function () {
     Route::get('/', [CategoryController::class, 'index'])->name('category.index');
