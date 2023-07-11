@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\CategoryRequest;
-use Illuminate\Http\Request;
 use App\Models\Category;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -68,6 +67,7 @@ class CategoryController extends BaseController
             $imageUrl = asset(Storage::url($imagePath));
             $category->url = $imageUrl;
         }
+
         $category->save();
         return $this->handleResponse($category, 'Category update successfully!');
     }
