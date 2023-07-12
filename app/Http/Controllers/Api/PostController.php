@@ -52,7 +52,7 @@ class PostController extends BaseController
 
     public function show(Post $post)
     {
-        $data = $post->load('categories');
+        $data = $post->load('categories:name');
         return $this->handleResponse($data, 'Post data');
     }
 
