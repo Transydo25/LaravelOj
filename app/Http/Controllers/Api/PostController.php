@@ -32,6 +32,7 @@ class PostController extends BaseController
 
         $slug = Str::slug($request->title);
         $categoryIds = $request->categories;
+        $activeCategoryIds = Category::whereIn('id', $categoryIds)->where('status', 'active')->pluck('id')->toArray();
         $user_id = Auth::id();
 
         $post->title = $request->title;
@@ -41,7 +42,9 @@ class PostController extends BaseController
         $post->slug = $slug;
         $post->author = $user_id;
         $post->save();
-        $post->categories()->attach($categoryIds);
+        $post->categories()->attach($activeCategoryIds);
+
+        // $post->categories()->attach($categoryIds);
 
         return $this->handleResponse($post, 'Post created successfully');
     }

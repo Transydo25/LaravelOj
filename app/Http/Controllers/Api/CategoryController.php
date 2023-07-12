@@ -35,6 +35,7 @@ class CategoryController extends BaseController
         $category->description = $request->description;
         $category->slug = $slug;
         $category->type = $request->type;
+        $category->status = $request->status;
         $category->author = $user_id;
 
         $category->save();
@@ -68,6 +69,7 @@ class CategoryController extends BaseController
         $category->description = $request->description;
         $category->slug = $slug;
         $category->type = $request->type;
+        $category->status = $request->status;
         $category->author = $user_id;
 
         $category->save();
