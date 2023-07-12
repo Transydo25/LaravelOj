@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\PostController;
+
 
 
 /*
@@ -57,4 +59,16 @@ Route::group([
     Route::get('/{category}', [CategoryController::class, 'show'])->name('category.show');
     Route::post('/{category}', [CategoryController::class, 'update'])->name('category.update');
     Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
+});
+
+//Post
+Route::group([
+    'middleware' => ['jwt.verify', 'auth:api'],
+    'prefix' => 'post'
+], function () {
+    Route::get('/', [PostController::class, 'index'])->name('post.index');
+    Route::post('/', [PostController::class, 'store'])->name('post.store');
+    Route::get('/{post}', [PostController::class, 'show'])->name('post.show');
+    Route::post('/{post}', [PostController::class, 'update'])->name('post.update');
+    Route::delete('/{post}', [PostController::class, 'destroy'])->name('post.destroy');
 });

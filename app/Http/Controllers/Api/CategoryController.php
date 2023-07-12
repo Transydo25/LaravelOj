@@ -19,12 +19,11 @@ class CategoryController extends BaseController
         return $this->handleResponse($categories, 'Categories data');
     }
 
-    public function store(CategoryRequest $request)
+    public function store(CategoryRequest $request, Category $category)
     {
         $slug = Str::slug($request->name);
         $user_id = Auth::id();
         $image = $request->image;
-        $category = new Category();
 
         if ($image) {
             $imageName = Str::random(10);
