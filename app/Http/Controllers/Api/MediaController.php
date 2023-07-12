@@ -41,7 +41,7 @@ class MediaController extends BaseController
             $media->save();
             return $this->handleResponse($media, 'Media create successfully!');
         }
-        return $this->handleResponseErros('', 'No image');
+        return $this->handleResponseError('', 'No image');
     }
 
 

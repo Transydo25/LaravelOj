@@ -26,16 +26,17 @@ class CategoryController extends BaseController
         $image = $request->image;
         $category = new Category();
 
-        $category->fill($request->all());
-        $category->slug = $slug;
-        $category->author = $user_id;
         if ($image) {
             $imageName = Str::random(10);
             $imagePath = $image->storeAs('public/upload/' . date('Y/m/d'), $imageName);
             $imageUrl = asset(Storage::url($imagePath));
-
             $category->url = $imageUrl;
         }
+        $category->name = $request->name;
+        $category->description = $request->description;
+        $category->slug = $slug;
+        $category->type = $request->type;
+        $category->author = $user_id;
 
         $category->save();
         return $this->handleResponse($category, 'Category created successfully');
@@ -54,9 +55,6 @@ class CategoryController extends BaseController
         $user_id = Auth::id();
         $image = $request->image;
 
-        $category->fill($request->all());
-        $category->slug = $slug;
-        $category->author = $user_id;
         if ($image) {
             if ($category->url) {
                 $path = 'public' . Str::after($category->url, 'storage');
@@ -67,6 +65,11 @@ class CategoryController extends BaseController
             $imageUrl = asset(Storage::url($imagePath));
             $category->url = $imageUrl;
         }
+        $category->name = $request->name;
+        $category->description = $request->description;
+        $category->slug = $slug;
+        $category->type = $request->type;
+        $category->author = $user_id;
 
         $category->save();
         return $this->handleResponse($category, 'Category update successfully!');
