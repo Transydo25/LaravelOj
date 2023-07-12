@@ -27,6 +27,7 @@ class PostController extends BaseController
             'content' => 'string',
             'status' => 'in:draft,published,archived',
             'type' => 'string',
+            'categories' => 'required|array',
         ]);
 
         $post = new Post;
@@ -62,6 +63,7 @@ class PostController extends BaseController
             'content' => 'string',
             'status' => 'in:draft,published,archived',
             'type' => 'string',
+            'categories' => 'required|array',
         ]);
 
         $slug = Str::slug($request->title);
