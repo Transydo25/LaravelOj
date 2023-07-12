@@ -41,9 +41,7 @@ class PostController extends BaseController
         $post->slug = $slug;
         $post->author = $user_id;
         $post->save();
-        foreach ($categoryIds as $categoryId) {
-            $post->categories()->attach($categoryId);
-        }
+        $post->categories()->attach($categoryIds);
 
         return $this->handleResponse($post, 'Post created successfully');
     }
@@ -77,9 +75,7 @@ class PostController extends BaseController
         $post->author = $user_id;
         $post->save();
         $post->categories()->detach();
-        foreach ($categoryIds as $categoryId) {
-            $post->categories()->attach($categoryId);
-        }
+        $post->categories()->attach($categoryIds);
 
         return $this->handleResponse($post, 'Post created successfully');
     }
