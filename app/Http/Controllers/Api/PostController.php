@@ -20,7 +20,7 @@ class PostController extends BaseController
         return $this->handleResponse($posts, 'Posts data');
     }
 
-    public function store(Request $request)
+    public function store(Request $request, Post $post)
     {
         $request->validate([
             'title' => 'required|string|max: 255',
@@ -30,7 +30,6 @@ class PostController extends BaseController
             'categories' => 'required|array',
         ]);
 
-        $post = new Post;
         $slug = Str::slug($request->title);
         $categoryIds = $request->categories;
         $user_id = Auth::id();
@@ -88,7 +87,6 @@ class PostController extends BaseController
 
     public function destroy(Post $post)
     {
-        // $post->categories()->detach();
         $post->delete();
         return $this->handleResponse([], 'Post delete successfully!');
     }
