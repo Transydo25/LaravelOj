@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\BaseController;
 use Illuminate\Http\Request;
 use App\Models\Post;
+use App\Models\PostMeta;
 use App\Models\Category;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -20,7 +22,7 @@ class PostController extends BaseController
         return $this->handleResponse($posts, 'Posts data');
     }
 
-    public function store(Request $request, Post $post)
+    public function store(Request $request)
     {
         $request->validate([
             'title' => 'required|string|max: 255',
@@ -28,8 +30,12 @@ class PostController extends BaseController
             'status' => 'in:draft,published,archived',
             'type' => 'string',
             'categories' => 'required|array',
+            'meta_key' => 'string',
         ]);
 
+        $post = new Post;
+        $post_meta = new PostMeta;
+        $value = $request->meta_value;
         $slug = Str::slug($request->title);
         $categoryIds = $request->categories;
         $user_id = Auth::id();
@@ -41,6 +47,19 @@ class PostController extends BaseController
         $post->slug = $slug;
         $post->author = $user_id;
         $post->save();
+        $post_meta->post_id = $post->id;
+        $post_meta->key = $request->meta_key;
+        if (is_file($value)) {
+            $post_meta->type = 'file';
+            $imageName = Str::random(10);
+            $path = $value->storeAs('public/post/' . date('Y/m/d'), $imageName);
+            $post_meta->value = asset(Storage::url($path));
+        } else {
+            $post_meta->type = 'string';
+            $post_meta->value = $value;
+        }
+        $post_meta->save();
+
         $post->categories()->attach($categoryIds);
 
         return $this->handleResponse($post, 'Post created successfully');
@@ -49,10 +68,15 @@ class PostController extends BaseController
 
     public function show(Post $post)
     {
-        $activeCategories = $post->categories()->where('status', 'active')->pluck('name')->toArray();
-        $post->setAttribute('categories', $activeCategories);
+        $data = $post->load([
+            'categories' => function ($query) {
+                $query->where('status', 'active');
+            },
+            'categories:name',
+            'postMeta'
+        ]);
 
-        return $this->handleResponse($post, 'Post data');
+        return $this->handleResponse($data, 'success');
     }
 
     public function update(Request $request, Post $post)
@@ -63,8 +87,11 @@ class PostController extends BaseController
             'status' => 'in:draft,published,archived',
             'type' => 'string',
             'categories' => 'required|array',
+            'meta_key' => 'string',
         ]);
 
+        $post_meta = new PostMeta;
+        $value = $request->meta_value;
         $slug = Str::slug($request->title);
         $categoryIds = $request->categories;
         $user_id = Auth::id();
@@ -78,6 +105,18 @@ class PostController extends BaseController
         $post->type = $request->type;
         $post->slug = $slug;
         $post->save();
+        $post_meta->post_id = $post->id;
+        $post_meta->key = $request->meta_key;
+        if (is_file($value)) {
+            $post_meta->type = 'file';
+            $imageName = Str::random(10);
+            $path = $value->storeAs('public/post/' . date('Y/m/d'), $imageName);
+            $post_meta->value = asset(Storage::url($path));
+        } else {
+            $post_meta->type = 'string';
+            $post_meta->value = $value;
+        }
+        $post_meta->save();
         $post->categories()->sync($categoryIds);
 
         return $this->handleResponse($post, 'Post updated successfully');
@@ -91,7 +130,7 @@ class PostController extends BaseController
         if ($user_id !== $post->author) {
             return $this->handleError([], 'You are not authorized to deleted this post');
         }
-        $post->delete();
+        $post->forceDelete();
 
         return $this->handleResponse([], 'Post delete successfully!');
     }

@@ -91,11 +91,7 @@ class CategoryController extends BaseController
             $path = 'public' . Str::after($category->url, 'storage');
             Storage::delete($path);
         }
-        $this->posts()->each(function ($post) {
-            $post->category()->dissociate();
-            $post->save();
-        });
-        $category->delete();
+        $category->forceDelete();
 
         return $this->handleResponse([], 'Category delete successfully!');
     }
