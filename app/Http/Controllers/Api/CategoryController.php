@@ -15,7 +15,7 @@ class CategoryController extends BaseController
 
     public function index()
     {
-        $categories = Category::all();
+        $categories = Category::where('status', 'active')->get();
         return $this->handleResponse($categories, 'Categories data');
     }
 
@@ -44,8 +44,9 @@ class CategoryController extends BaseController
 
     public function show(Category $category)
     {
-        $data = $category;
-        return $this->handleResponse($data, 'Category data');
+        $publishedPosts = $category->posts()->where('status', 'published')->pluck('title')->toArray();
+        $category->setAttribute('posts', $publishedPosts);
+        return $this->handleResponse($category, 'Category data');
     }
 
 
@@ -55,6 +56,9 @@ class CategoryController extends BaseController
         $user_id = Auth::id();
         $image = $request->image;
 
+        if ($user_id !== $category->author) {
+            return $this->handleResponseError([], 'You are not authorized to update this post');
+        }
         if ($image) {
             if ($category->url) {
                 $path = 'public' . Str::after($category->url, 'storage');
@@ -70,7 +74,6 @@ class CategoryController extends BaseController
         $category->slug = $slug;
         $category->type = $request->type;
         $category->status = $request->status;
-        $category->author = $user_id;
 
         $category->save();
         return $this->handleResponse($category, 'Category update successfully!');
@@ -79,11 +82,21 @@ class CategoryController extends BaseController
 
     public function destroy(Category $category)
     {
+        $user_id = Auth::id();
+
+        if ($user_id !== $category->author) {
+            return $this->handleError([], 'You are not authorized to deleted this post');
+        }
         if ($category->url) {
             $path = 'public' . Str::after($category->url, 'storage');
             Storage::delete($path);
         }
+        $this->posts()->each(function ($post) {
+            $post->category()->dissociate();
+            $post->save();
+        });
         $category->delete();
+
         return $this->handleResponse([], 'Category delete successfully!');
     }
 }

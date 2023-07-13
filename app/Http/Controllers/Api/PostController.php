@@ -16,7 +16,7 @@ class PostController extends BaseController
 {
     public function index()
     {
-        $posts = Post::all();
+        $posts = Post::where('status', 'published')->get();
         return $this->handleResponse($posts, 'Posts data');
     }
 
@@ -32,7 +32,6 @@ class PostController extends BaseController
 
         $slug = Str::slug($request->title);
         $categoryIds = $request->categories;
-        $activeCategoryIds = Category::whereIn('id', $categoryIds)->where('status', 'active')->pluck('id')->toArray();
         $user_id = Auth::id();
 
         $post->title = $request->title;
@@ -42,9 +41,7 @@ class PostController extends BaseController
         $post->slug = $slug;
         $post->author = $user_id;
         $post->save();
-        $post->categories()->attach($activeCategoryIds);
-
-        // $post->categories()->attach($categoryIds);
+        $post->categories()->attach($categoryIds);
 
         return $this->handleResponse($post, 'Post created successfully');
     }
@@ -52,8 +49,10 @@ class PostController extends BaseController
 
     public function show(Post $post)
     {
-        $data = $post->load('categories:name');
-        return $this->handleResponse($data, 'Post data');
+        $activeCategories = $post->categories()->where('status', 'active')->pluck('name')->toArray();
+        $post->setAttribute('categories', $activeCategories);
+
+        return $this->handleResponse($post, 'Post data');
     }
 
     public function update(Request $request, Post $post)
@@ -70,23 +69,30 @@ class PostController extends BaseController
         $categoryIds = $request->categories;
         $user_id = Auth::id();
 
+        if ($user_id !== $post->author) {
+            return $this->handleResponseError([], 'You are not authorized to update this post');
+        }
         $post->title = $request->title;
         $post->content = $request->content;
         $post->status = $request->status;
         $post->type = $request->type;
         $post->slug = $slug;
-        $post->author = $user_id;
         $post->save();
-        $post->categories()->detach();
-        $post->categories()->attach($categoryIds);
+        $post->categories()->sync($categoryIds);
 
-        return $this->handleResponse($post, 'Post created successfully');
+        return $this->handleResponse($post, 'Post updated successfully');
     }
 
 
     public function destroy(Post $post)
     {
+        $user_id = Auth::id();
+
+        if ($user_id !== $post->author) {
+            return $this->handleError([], 'You are not authorized to deleted this post');
+        }
         $post->delete();
+
         return $this->handleResponse([], 'Post delete successfully!');
     }
 }

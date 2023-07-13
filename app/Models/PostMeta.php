@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class PostMeta extends Model
 {
     use HasFactory;
-    protected $fillable = ['path', 'link', 'meta_key'];
+    protected $fillable = ['key', 'value'];
 
     public function post()
     {
