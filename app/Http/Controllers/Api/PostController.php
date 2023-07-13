@@ -11,9 +11,6 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 
-
-
-
 class PostController extends BaseController
 {
     public function index()
@@ -30,11 +27,11 @@ class PostController extends BaseController
             'status' => 'in:draft,published,archived',
             'type' => 'string',
             'categories' => 'required|array',
-            'meta_key' => 'string',
+            'meta_keys' => 'array',
+            'meta_values' => 'array',
         ]);
 
         $post = new Post;
-        $value = $request->meta_value;
         $slug = Str::slug($request->title);
         $categoryIds = $request->categories;
         $user_id = Auth::id();
@@ -46,24 +43,26 @@ class PostController extends BaseController
         $post->slug = $slug;
         $post->author = $user_id;
         $post->save();
-        if ($request->has('meta_key') && $request->has('meta_value')) {
-            $post_meta = new PostMeta;
-            $value = $request->meta_value;
-            $post_meta->post_id = $post->id;
-            $post_meta->key = $request->meta_key;
-            if (is_file($value)) {
-                $post_meta->type = 'file';
-                $imageName = Str::random(10);
-                $path = $value->storeAs('public/post/' . date('Y/m/d'), $imageName);
-                $post_meta->value = asset(Storage::url($path));
-            } else {
-                $post_meta->type = 'string';
-                $post_meta->value = $value;
+        if ($request->has('meta_keys') && $request->has('meta_values')) {
+            $metaKeys = $request->meta_keys;
+            $metaValues = $request->meta_values;
+            foreach ($metaKeys as $index => $metaKey) {
+                $postMeta = new PostMeta;
+                $value = $metaValues[$index];
+                $postMeta->post_id = $post->id;
+                $postMeta->key = $metaKey;
+                if (is_file($value)) {
+                    $imageName = Str::random(10);
+                    $path = $value->storeAs('public/post/' . date('Y/m/d'), $imageName);
+                    $postMeta->value = asset(Storage::url($path));
+                } else {
+                    $postMeta->value = $value;
+                }
+                $postMeta->save();
             }
-            $post_meta->save();
         }
 
-        $post->categories()->attach($categoryIds);
+        $post->categories()->sync($categoryIds);
 
         return $this->handleResponse($post, 'Post created successfully');
     }
@@ -96,11 +95,7 @@ class PostController extends BaseController
         $value = $request->meta_value;
         $slug = Str::slug($request->title);
         $categoryIds = $request->categories;
-        $user_id = Auth::id();
 
-        if ($user_id !== $post->author) {
-            return $this->handleResponseError([], 'You are not authorized to update this post');
-        }
         $post->title = $request->title;
         $post->content = $request->content;
         $post->status = $request->status;
@@ -113,12 +108,10 @@ class PostController extends BaseController
             $post_meta->post_id = $post->id;
             $post_meta->key = $request->meta_key;
             if (is_file($value)) {
-                $post_meta->type = 'file';
                 $imageName = Str::random(10);
                 $path = $value->storeAs('public/post/' . date('Y/m/d'), $imageName);
                 $post_meta->value = asset(Storage::url($path));
             } else {
-                $post_meta->type = 'string';
                 $post_meta->value = $value;
             }
             $post_meta->save();
@@ -127,7 +120,6 @@ class PostController extends BaseController
 
         return $this->handleResponse($post, 'Post updated successfully');
     }
-
 
     public function destroy(Post $post)
     {
