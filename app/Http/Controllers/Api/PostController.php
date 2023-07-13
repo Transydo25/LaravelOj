@@ -93,7 +93,6 @@ class PostController extends BaseController
             'meta_key' => 'string',
         ]);
 
-        $post_meta = new PostMeta;
         $value = $request->meta_value;
         $slug = Str::slug($request->title);
         $categoryIds = $request->categories;
@@ -108,18 +107,22 @@ class PostController extends BaseController
         $post->type = $request->type;
         $post->slug = $slug;
         $post->save();
-        $post_meta->post_id = $post->id;
-        $post_meta->key = $request->meta_key;
-        if (is_file($value)) {
-            $post_meta->type = 'file';
-            $imageName = Str::random(10);
-            $path = $value->storeAs('public/post/' . date('Y/m/d'), $imageName);
-            $post_meta->value = asset(Storage::url($path));
-        } else {
-            $post_meta->type = 'string';
-            $post_meta->value = $value;
+        if ($request->has('meta_key') && $request->has('meta_value')) {
+            $post_meta = new PostMeta;
+            $value = $request->meta_value;
+            $post_meta->post_id = $post->id;
+            $post_meta->key = $request->meta_key;
+            if (is_file($value)) {
+                $post_meta->type = 'file';
+                $imageName = Str::random(10);
+                $path = $value->storeAs('public/post/' . date('Y/m/d'), $imageName);
+                $post_meta->value = asset(Storage::url($path));
+            } else {
+                $post_meta->type = 'string';
+                $post_meta->value = $value;
+            }
+            $post_meta->save();
         }
-        $post_meta->save();
         $post->categories()->sync($categoryIds);
 
         return $this->handleResponse($post, 'Post updated successfully');
