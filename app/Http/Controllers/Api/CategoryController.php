@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\BaseController;
 use App\Http\Requests\CategoryRequest;
+use Illuminate\Http\Request;
 use App\Models\Category;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -13,9 +14,29 @@ use Illuminate\Support\Facades\Auth;
 class CategoryController extends BaseController
 {
 
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::where('status', 'active')->get();
+        $status = $request->input('status');
+        $layout_status = ['active', 'inactive'];
+        $sort = $request->input('sort');
+        $sort_types = ['desc', 'asc'];
+        $sort_option = ['name', 'created_at', 'updated_at'];
+        $sort_by = $request->input('sort_by');
+        $status = in_array($status, $layout_status) ? $status : 'active';
+        $sort = in_array($sort, $sort_types) ? $sort : 'desc';
+        $sort_by = in_array($sort_by, $sort_option) ? $sort_by : 'created_at';
+        $search = $request->input('query');
+        $limit = request()->input('limit') ?? 10;
+
+        $query = Category::select('*');
+
+        if ($status) {
+            $query = $query->where('status', $status);
+        }
+        if ($search) {
+            $query = $query->where('name', 'LIKE', '%' . $search . '%');
+        }
+        $categories = $query->orderBy($sort_by, $sort)->paginate($limit);
         return $this->handleResponse($categories, 'Categories data');
     }
 

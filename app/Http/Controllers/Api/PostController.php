@@ -6,16 +6,36 @@ use App\Http\Controllers\BaseController;
 use Illuminate\Http\Request;
 use App\Models\Post;
 use App\Models\PostMeta;
-use App\Models\Category;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 
 class PostController extends BaseController
 {
-    public function index()
+    public function index(Request $request)
     {
-        $posts = Post::where('status', 'published')->get();
+        $status = $request->input('status');
+        $layout_status = ['draft', 'published', 'archived'];
+        $sort = $request->input('sort');
+        $sort_types = ['desc', 'asc'];
+        $sort_option = ['title', 'created_at', 'updated_at'];
+        $sort_by = $request->input('sort_by');
+        $status = in_array($status, $layout_status) ? $status : 'published';
+        $sort = in_array($sort, $sort_types) ? $sort : 'desc';
+        $sort_by = in_array($sort_by, $sort_option) ? $sort_by : 'created_at';
+        $search = $request->input('query');
+        $limit = request()->input('limit') ?? 10;
+
+        $query = Post::select('*');
+
+        if ($status) {
+            $query = $query->where('status', $status);
+        }
+        if ($search) {
+            $query = $query->where('name', 'LIKE', '%' . $search . '%');
+        }
+        $posts = $query->orderBy($sort_by, $sort)->paginate($limit);
+
         return $this->handleResponse($posts, 'Posts data');
     }
 
@@ -70,15 +90,10 @@ class PostController extends BaseController
 
     public function show(Post $post)
     {
-        $data = $post->load([
-            'categories' => function ($query) {
-                $query->where('status', 'active');
-            },
-            'categories:name',
-            'postMeta'
-        ]);
+        $post->categories = $post->categories()->pluck('name');
+        $post->postMeta = $post->postMeta()->get();
 
-        return $this->handleResponse($data, 'success');
+        return $this->handleResponse($post, 'Post data details');
     }
 
     public function update(Request $request, Post $post)
@@ -89,7 +104,8 @@ class PostController extends BaseController
             'status' => 'in:draft,published,archived',
             'type' => 'string',
             'categories' => 'required|array',
-            'meta_key' => 'string',
+            'meta_keys' => 'array',
+            'meta_values' => 'array',
         ]);
 
         $value = $request->meta_value;
@@ -101,32 +117,48 @@ class PostController extends BaseController
         $post->status = $request->status;
         $post->type = $request->type;
         $post->slug = $slug;
-        $post->save();
-        if ($request->has('meta_key') && $request->has('meta_value')) {
-            $post_meta = new PostMeta;
-            $value = $request->meta_value;
-            $post_meta->post_id = $post->id;
-            $post_meta->key = $request->meta_key;
-            if (is_file($value)) {
-                $imageName = Str::random(10);
-                $path = $value->storeAs('public/post/' . date('Y/m/d'), $imageName);
-                $post_meta->value = asset(Storage::url($path));
-            } else {
-                $post_meta->value = $value;
-            }
-            $post_meta->save();
-        }
         $post->categories()->sync($categoryIds);
+        $post->save();
+        if ($request->has('meta_keys') && $request->has('meta_values')) {
+            $postMetas = $post->postMeta()->get();
+            foreach ($postMetas as $postMeta) {
+                $value = $postMeta->value;
+                if (filter_var($value, FILTER_VALIDATE_URL) !== false) {
+                    $path = 'public' . Str::after($postMeta->value, 'storage');
+                    Storage::delete($path);
+                }
+                $postMeta->delete();
+            }
+            $metaKeys = $request->meta_keys;
+            $metaValues = $request->meta_values;
+            foreach ($metaKeys as $index => $metaKey) {
+                $postMeta = new PostMeta;
+                $value = $metaValues[$index];
+                $postMeta->post_id = $post->id;
+                $postMeta->key = $metaKey;
+                if (is_file($value)) {
+                    $imageName = Str::random(10);
+                    $path = $value->storeAs('public/post/' . date('Y/m/d'), $imageName);
+                    $postMeta->value = asset(Storage::url($path));
+                } else {
+                    $postMeta->value = $value;
+                }
+                $postMeta->save();
+            }
+        }
 
         return $this->handleResponse($post, 'Post updated successfully');
     }
 
     public function destroy(Post $post)
     {
-        $user_id = Auth::id();
-
-        if ($user_id !== $post->author) {
-            return $this->handleError([], 'You are not authorized to deleted this post');
+        $postMetas = $post->postMeta()->get();
+        foreach ($postMetas as $postMeta) {
+            $value = $postMeta->value;
+            if (filter_var($value, FILTER_VALIDATE_URL) !== false) {
+                $path = 'public' . Str::after($postMeta->value, 'storage');
+                Storage::delete($path);
+            }
         }
         $post->forceDelete();
 
