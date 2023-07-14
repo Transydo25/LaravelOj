@@ -24,7 +24,7 @@ class PostController extends BaseController
         $sort = in_array($sort, $sort_types) ? $sort : 'desc';
         $sort_by = in_array($sort_by, $sort_option) ? $sort_by : 'created_at';
         $search = $request->input('query');
-        $limit = request()->input('limit') ?? 20;
+        $limit = request()->input('limit') ?? config('app.paginate');
 
         $query = Post::select('*');
 
@@ -67,18 +67,18 @@ class PostController extends BaseController
             $metaKeys = $request->meta_keys;
             $metaValues = $request->meta_values;
             foreach ($metaKeys as $index => $metaKey) {
-                $postMeta = new PostMeta;
+                $post_meta = new PostMeta;
                 $value = $metaValues[$index];
-                $postMeta->post_id = $post->id;
-                $postMeta->key = $metaKey;
+                $post_meta->post_id = $post->id;
+                $post_meta->key = $metaKey;
                 if (is_file($value)) {
                     $imageName = Str::random(10);
                     $path = $value->storeAs('public/post/' . date('Y/m/d'), $imageName);
-                    $postMeta->value = asset(Storage::url($path));
+                    $post_meta->value = asset(Storage::url($path));
                 } else {
-                    $postMeta->value = $value;
+                    $post_meta->value = $value;
                 }
-                $postMeta->save();
+                $post_meta->save();
             }
         }
 
@@ -91,7 +91,7 @@ class PostController extends BaseController
     public function show(Post $post)
     {
         $post->categories = $post->categories()->where('status', 'active')->pluck('name');
-        $post->postMeta = $post->postMeta()->get();
+        $post->post_meta = $post->postMeta()->get();
 
         return $this->handleResponse($post, 'Post data details');
     }
@@ -120,43 +120,34 @@ class PostController extends BaseController
         $post->categories()->sync($categoryIds);
         $post->save();
         if ($request->has('meta_keys') && $request->has('meta_values')) {
-            $postMetas = $post->postMeta()->get();
-            foreach ($postMetas as $postMeta) {
-                $value = $postMeta->value;
+            $post_metas = $post->postMeta()->get();
+            foreach ($post_metas as $post_meta) {
+                $value = $post_meta->value;
                 if (filter_var($value, FILTER_VALIDATE_URL) !== false) {
-                    $path = 'public' . Str::after($postMeta->value, 'storage');
+                    $path = 'public' . Str::after($post_meta->value, 'storage');
                     Storage::delete($path);
                 }
-                $postMeta->delete();
+                $post_meta->delete();
             }
             $metaKeys = $request->meta_keys;
             $metaValues = $request->meta_values;
             foreach ($metaKeys as $index => $metaKey) {
-                $postMeta = new PostMeta;
+                $post_meta = new PostMeta;
                 $value = $metaValues[$index];
-                $postMeta->post_id = $post->id;
-                $postMeta->key = $metaKey;
+                $post_meta->post_id = $post->id;
+                $post_meta->key = $metaKey;
                 if (is_file($value)) {
                     $imageName = Str::random(10);
                     $path = $value->storeAs('public/post/' . date('Y/m/d'), $imageName);
-                    $postMeta->value = asset(Storage::url($path));
+                    $post_meta->value = asset(Storage::url($path));
                 } else {
-                    $postMeta->value = $value;
+                    $post_meta->value = $value;
                 }
-                $postMeta->save();
+                $post_meta->save();
             }
         }
 
         return $this->handleResponse($post, 'Post updated successfully');
-    }
-
-    public function destroy(Post $post)
-    {
-        $post->delete();
-        $post->status = 'archived';
-        $post->save();
-
-        return $this->handleResponse([], 'Post delete successfully!');
     }
 
     public function restore(Request $request)
@@ -178,29 +169,40 @@ class PostController extends BaseController
         return $this->handleResponse([], 'Post restored successfully!');
     }
 
-    public function forceDelete(Request $request)
+    public function deletePost(Request $request)
     {
         $request->validate([
             'ids' => 'required',
+            'type' => 'required|in:delete,force_delete',
         ]);
 
         $ids = $request->input('ids');
-
+        $type = $request->input('type');
         $ids = is_array($ids) ? $ids : [$ids];
         $posts = Post::withTrashed()->whereIn('id', $ids)->get();
 
         foreach ($posts as $post) {
-            $postMetas = $post->postMeta()->get();
-            foreach ($postMetas as $postMeta) {
-                $value = $postMeta->value;
-                if (filter_var($value, FILTER_VALIDATE_URL) !== false) {
-                    $path = 'public' . Str::after($postMeta->value, 'storage');
-                    Storage::delete($path);
+            $post->status = 'archived';
+            $post->save();
+            if ($type === 'force_delete') {
+                $post_metas = $post->postMeta()->get();
+                foreach ($post_metas as $post_meta) {
+                    $value = $post_meta->value;
+                    if (filter_var($value, FILTER_VALIDATE_URL) !== false) {
+                        $path = 'public' . Str::after($post_meta->value, 'storage');
+                        Storage::delete($path);
+                    }
                 }
+                $post->forceDelete();
+            } else {
+                $post->delete();
             }
         }
-        Post::withTrashed()->whereIn('id', $ids)->forceDelete();
 
-        return $this->handleResponse([], 'Post force delete successfully!');
+        if ($type === 'force_delete') {
+            return $this->handleResponse([], 'Post force delete successfully!');
+        } else {
+            return $this->handleResponse([], 'Post delete successfully!');
+        }
     }
 }

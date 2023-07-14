@@ -17,7 +17,7 @@ class CategoryController extends BaseController
     public function index(Request $request)
     {
         $status = $request->input('status');
-        $layout_status = ['active', 'inactive'];
+        $layout_status = ['active', 'deactive'];
         $sort = $request->input('sort');
         $sort_types = ['desc', 'asc'];
         $sort_option = ['name', 'created_at', 'updated_at'];
@@ -26,7 +26,7 @@ class CategoryController extends BaseController
         $sort = in_array($sort, $sort_types) ? $sort : 'desc';
         $sort_by = in_array($sort_by, $sort_option) ? $sort_by : 'created_at';
         $search = $request->input('query');
-        $limit = request()->input('limit') ?? 20;
+        $limit = request()->input('limit') ?? config('app.paginate');
 
         $query = Category::select('*');
 
@@ -95,16 +95,6 @@ class CategoryController extends BaseController
         return $this->handleResponse($category, 'Category update successfully!');
     }
 
-
-    public function destroy(Category $category)
-    {
-        $category->delete();
-        $category->status = 'inactive';
-        $category->save();
-
-        return $this->handleResponse([], 'Category delete successfully!');
-    }
-
     public function restore(Request $request)
     {
         $request->validate([
@@ -124,24 +114,35 @@ class CategoryController extends BaseController
         return $this->handleResponse([], 'Category restored successfully!');
     }
 
-    public function forceDelete(Request $request)
+    public function deleteCategory(Request $request)
     {
         $request->validate([
             'ids' => 'required',
+            'type' => 'required|in:delete,force_delete',
         ]);
 
         $ids = $request->input('ids');
-
+        $type = $request->input('type');
         $ids = is_array($ids) ? $ids : [$ids];
         $categories = Category::withTrashed()->whereIn('id', $ids)->get();
+
         foreach ($categories as $category) {
-            if ($category->url) {
-                $path = 'public' . Str::after($category->url, 'storage');
-                Storage::delete($path);
+            $category->status = 'deactive';
+            $category->save();
+            if ($type === 'force_delete') {
+                if ($category->url) {
+                    $path = 'public' . Str::after($category->url, 'storage');
+                    Storage::delete($path);
+                }
+                $category->forceDelete();
+            } else {
+                $category->delete();
             }
         }
-        Category::withTrashed()->whereIn('id', $ids)->forceDelete();
-
-        return $this->handleResponse([], 'Category force deleted successfully!');
+        if ($type === 'force_delete') {
+            return $this->handleResponse([], 'Category force delete successfully!');
+        } else {
+            return $this->handleResponse([], 'Category delete successfully!');
+        }
     }
 }
