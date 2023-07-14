@@ -98,11 +98,9 @@ class CategoryController extends BaseController
 
     public function destroy(Category $category)
     {
-        if ($category->url) {
-            $path = 'public' . Str::after($category->url, 'storage');
-            Storage::delete($path);
-        }
         $category->delete();
+        $category->status = 'inactive';
+        $category->save();
 
         return $this->handleResponse([], 'Category delete successfully!');
     }
@@ -117,6 +115,11 @@ class CategoryController extends BaseController
 
         $ids = is_array($ids) ? $ids : [$ids];
         Category::onlyTrashed()->whereIn('id', $ids)->restore();
+        foreach ($ids as $id) {
+            $category = Category::find($id);
+            $category->status = 'active';
+            $category->save();
+        }
 
         return $this->handleResponse([], 'Category restored successfully!');
     }
@@ -130,7 +133,15 @@ class CategoryController extends BaseController
         $ids = $request->input('ids');
 
         $ids = is_array($ids) ? $ids : [$ids];
+        $categories = Category::withTrashed()->whereIn('id', $ids)->get();
+        foreach ($categories as $category) {
+            if ($category->url) {
+                $path = 'public' . Str::after($category->url, 'storage');
+                Storage::delete($path);
+            }
+        }
         Category::withTrashed()->whereIn('id', $ids)->forceDelete();
+
         return $this->handleResponse([], 'Category force deleted successfully!');
     }
 }

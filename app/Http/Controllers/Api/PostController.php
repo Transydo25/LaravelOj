@@ -152,15 +152,9 @@ class PostController extends BaseController
 
     public function destroy(Post $post)
     {
-        $postMetas = $post->postMeta()->get();
-        foreach ($postMetas as $postMeta) {
-            $value = $postMeta->value;
-            if (filter_var($value, FILTER_VALIDATE_URL) !== false) {
-                $path = 'public' . Str::after($postMeta->value, 'storage');
-                Storage::delete($path);
-            }
-        }
         $post->delete();
+        $post->status = 'archived';
+        $post->save();
 
         return $this->handleResponse([], 'Post delete successfully!');
     }
@@ -175,6 +169,11 @@ class PostController extends BaseController
 
         $ids = is_array($ids) ? $ids : [$ids];
         Post::onlyTrashed()->whereIn('id', $ids)->restore();
+        foreach ($ids as $id) {
+            $post = Post::find($id);
+            $post->status = 'published';
+            $post->save();
+        }
 
         return $this->handleResponse([], 'Post restored successfully!');
     }
@@ -188,6 +187,18 @@ class PostController extends BaseController
         $ids = $request->input('ids');
 
         $ids = is_array($ids) ? $ids : [$ids];
+        $posts = Post::withTrashed()->whereIn('id', $ids)->get();
+
+        foreach ($posts as $post) {
+            $postMetas = $post->postMeta()->get();
+            foreach ($postMetas as $postMeta) {
+                $value = $postMeta->value;
+                if (filter_var($value, FILTER_VALIDATE_URL) !== false) {
+                    $path = 'public' . Str::after($postMeta->value, 'storage');
+                    Storage::delete($path);
+                }
+            }
+        }
         Post::withTrashed()->whereIn('id', $ids)->forceDelete();
 
         return $this->handleResponse([], 'Post force delete successfully!');
