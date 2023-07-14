@@ -102,9 +102,9 @@ class CategoryController extends BaseController
         ]);
 
         $ids = $request->input('ids');
-
         $ids = is_array($ids) ? $ids : [$ids];
         Category::onlyTrashed()->whereIn('id', $ids)->restore();
+
         foreach ($ids as $id) {
             $category = Category::find($id);
             $category->status = 'active';
