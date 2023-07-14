@@ -59,8 +59,8 @@ Route::group([
     Route::get('/{category}', [CategoryController::class, 'show'])->name('category.show');
     Route::post('/{category}', [CategoryController::class, 'update'])->name('category.update');
     Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
-    Route::delete('/forcedelete/{category}', [CategoryController::class, 'forceDelete'])->name('category.forceDelete');
-    Route::post('/restore/{category}', [CategoryController::class, 'restore'])->name('category.restore');
+    Route::put('/forcedelete', [CategoryController::class, 'forceDelete'])->name('category.forceDelete');
+    Route::put('/restore', [CategoryController::class, 'restore'])->name('category.restore');
 });
 
 //Post
@@ -73,6 +73,6 @@ Route::group([
     Route::get('/{post}', [PostController::class, 'show'])->name('post.show');
     Route::post('/{post}', [PostController::class, 'update'])->name('post.update');
     Route::delete('/{post}', [PostController::class, 'destroy'])->name('post.destroy');
-    Route::delete('/forcedelete/{post}', [PostController::class, 'forceDelete'])->name('post.forceDelete');
-    Route::post('/restore/{post}', [PostController::class, 'restore'])->name('post.restore');
+    Route::put('/forcedelete', [PostController::class, 'forceDelete'])->name('post.forceDelete');
+    Route::put('/restore', [PostController::class, 'restore'])->name('post.restore');
 });

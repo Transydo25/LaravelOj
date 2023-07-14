@@ -165,25 +165,31 @@ class PostController extends BaseController
         return $this->handleResponse([], 'Post delete successfully!');
     }
 
-    public function restore($id)
+    public function restore(Request $request)
     {
-        $post = Post::onlyTrashed()->find($id);
-        $post->restore();
+        $request->validate([
+            'ids' => 'required',
+        ]);
+
+        $ids = $request->input('ids');
+
+        $ids = is_array($ids) ? $ids : [$ids];
+        Post::onlyTrashed()->whereIn('id', $ids)->restore();
 
         return $this->handleResponse([], 'Post restored successfully!');
     }
 
-
-
-    public function forceDelete($id)
+    public function forceDelete(Request $request)
     {
-        $post = Post::withTrashed()->find($id);
+        $request->validate([
+            'ids' => 'required',
+        ]);
 
-        if ($post->trashed()) {
-            $post->forceDelete();
-            return $this->handleResponse([], 'Post force deleted successfully!');
-        } else {
-            return $this->handleResponse([], 'Post is not in trash. Cannot force delete!');
-        }
+        $ids = $request->input('ids');
+
+        $ids = is_array($ids) ? $ids : [$ids];
+        Post::withTrashed()->whereIn('id', $ids)->forceDelete();
+
+        return $this->handleResponse([], 'Post force delete successfully!');
     }
 }

@@ -107,23 +107,30 @@ class CategoryController extends BaseController
         return $this->handleResponse([], 'Category delete successfully!');
     }
 
-    public function restore($id)
+    public function restore(Request $request)
     {
-        $category = Category::onlyTrashed()->find($id);
-        $category->restore();
+        $request->validate([
+            'ids' => 'required',
+        ]);
+
+        $ids = $request->input('ids');
+
+        $ids = is_array($ids) ? $ids : [$ids];
+        Category::onlyTrashed()->whereIn('id', $ids)->restore();
 
         return $this->handleResponse([], 'Category restored successfully!');
     }
 
-    public function forceDelete($id)
+    public function forceDelete(Request $request)
     {
-        $category = Category::withTrashed()->find($id);
+        $request->validate([
+            'ids' => 'required',
+        ]);
 
-        if ($category->trashed()) {
-            $category->forceDelete();
-            return $this->handleResponse([], 'Category force deleted successfully!');
-        } else {
-            return $this->handleResponse([], 'Category is not in trash. Cannot force delete!');
-        }
+        $ids = $request->input('ids');
+
+        $ids = is_array($ids) ? $ids : [$ids];
+        Category::withTrashed()->whereIn('id', $ids)->forceDelete();
+        return $this->handleResponse([], 'Category force deleted successfully!');
     }
 }
