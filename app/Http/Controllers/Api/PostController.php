@@ -24,7 +24,7 @@ class PostController extends BaseController
         $sort = in_array($sort, $sort_types) ? $sort : 'desc';
         $sort_by = in_array($sort_by, $sort_option) ? $sort_by : 'created_at';
         $search = $request->input('query');
-        $limit = request()->input('limit') ?? 10;
+        $limit = request()->input('limit') ?? 20;
 
         $query = Post::select('*');
 
