@@ -65,8 +65,7 @@ class CategoryController extends BaseController
 
     public function show(Category $category)
     {
-        $publishedPosts = $category->posts()->where('status', 'published')->pluck('title')->toArray();
-        $category->setAttribute('posts', $publishedPosts);
+        $category->posts = $category->posts()->where('status', 'published')->pluck('title');
         return $this->handleResponse($category, 'Category data');
     }
 
@@ -74,12 +73,8 @@ class CategoryController extends BaseController
     public function update(CategoryRequest $request, Category $category)
     {
         $slug = Str::slug($request->name);
-        $user_id = Auth::id();
         $image = $request->image;
 
-        if ($user_id !== $category->author) {
-            return $this->handleResponseError([], 'You are not authorized to update this post');
-        }
         if ($image) {
             if ($category->url) {
                 $path = 'public' . Str::after($category->url, 'storage');
@@ -103,17 +98,32 @@ class CategoryController extends BaseController
 
     public function destroy(Category $category)
     {
-        $user_id = Auth::id();
-
-        if ($user_id !== $category->author) {
-            return $this->handleError([], 'You are not authorized to deleted this post');
-        }
         if ($category->url) {
             $path = 'public' . Str::after($category->url, 'storage');
             Storage::delete($path);
         }
-        $category->forceDelete();
+        $category->delete();
 
         return $this->handleResponse([], 'Category delete successfully!');
+    }
+
+    public function restore($id)
+    {
+        $category = Category::onlyTrashed()->find($id);
+        $category->restore();
+
+        return $this->handleResponse([], 'Category restored successfully!');
+    }
+
+    public function forceDelete($id)
+    {
+        $category = Category::withTrashed()->find($id);
+
+        if ($category->trashed()) {
+            $category->forceDelete();
+            return $this->handleResponse([], 'Category force deleted successfully!');
+        } else {
+            return $this->handleResponse([], 'Category is not in trash. Cannot force delete!');
+        }
     }
 }

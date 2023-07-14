@@ -32,7 +32,7 @@ class PostController extends BaseController
             $query = $query->where('status', $status);
         }
         if ($search) {
-            $query = $query->where('name', 'LIKE', '%' . $search . '%');
+            $query = $query->where('title', 'LIKE', '%' . $search . '%');
         }
         $posts = $query->orderBy($sort_by, $sort)->paginate($limit);
 
@@ -90,7 +90,7 @@ class PostController extends BaseController
 
     public function show(Post $post)
     {
-        $post->categories = $post->categories()->pluck('name');
+        $post->categories = $post->categories()->where('status', 'active')->pluck('name');
         $post->postMeta = $post->postMeta()->get();
 
         return $this->handleResponse($post, 'Post data details');
@@ -160,8 +160,30 @@ class PostController extends BaseController
                 Storage::delete($path);
             }
         }
-        $post->forceDelete();
+        $post->delete();
 
         return $this->handleResponse([], 'Post delete successfully!');
+    }
+
+    public function restore($id)
+    {
+        $post = Post::onlyTrashed()->find($id);
+        $post->restore();
+
+        return $this->handleResponse([], 'Post restored successfully!');
+    }
+
+
+
+    public function forceDelete($id)
+    {
+        $post = Post::withTrashed()->find($id);
+
+        if ($post->trashed()) {
+            $post->forceDelete();
+            return $this->handleResponse([], 'Post force deleted successfully!');
+        } else {
+            return $this->handleResponse([], 'Post is not in trash. Cannot force delete!');
+        }
     }
 }
