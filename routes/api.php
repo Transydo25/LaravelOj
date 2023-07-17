@@ -6,6 +6,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\PostController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\VerifyEmailController;
+
 
 
 
@@ -27,15 +30,25 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::group([
     'middleware' => 'api',
     'prefix' => 'auth'
-
 ], function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::get('/user-profile', [AuthController::class, 'userProfile']);
-    Route::post('/change-pass', [AuthController::class, 'changePassWord']);
+    Route::get('/', [AuthController::class, 'index']);
+    Route::post('/update/{user}', [AuthController::class, 'update'])->can('crud-user', 'user');
+    Route::delete('/{user}', [AuthController::class, 'destroy'])->can('crud-user', 'user');
 });
+
+//Mail
+Route::get('/email/verify/{id}/{hash}', [VerifyEmailController::class, 'verifyEmail'])
+    ->middleware(['auth', 'signed'])->name('verification.verify');
+
+Route::post('/email/verify/resend', function (Request $request) {
+    $request->user()->sendEmailVerificationNotification();
+    return back()->with('message', 'Verification link sent!');
+})->middleware(['auth:api', 'throttle:6,1'])->name('verification.send');
 
 //Media
 Route::group([
