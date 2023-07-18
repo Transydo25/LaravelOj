@@ -6,11 +6,7 @@ use App\Http\Controllers\BaseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\VerificationCodeMail;
 use Illuminate\Auth\Events\Registered;
-
-
 
 class AuthController extends BaseController
 {

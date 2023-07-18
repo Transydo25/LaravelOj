@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\VerifyEmailController;
+use App\Models\User;
+
 
 
 
@@ -37,8 +39,8 @@ Route::group([
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::get('/user-profile', [AuthController::class, 'userProfile']);
     Route::get('/', [AuthController::class, 'index']);
-    Route::post('/update/{user}', [AuthController::class, 'update'])->can('crud-user', 'user');
-    Route::delete('/{user}', [AuthController::class, 'destroy'])->can('crud-user', 'user');
+    Route::post('/update/{user}', [AuthController::class, 'update'])->middleware('can:update,user');
+    Route::delete('/{user}', [AuthController::class, 'destroy'])->middleware('can:delete,user');
 });
 
 //Mail
