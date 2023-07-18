@@ -6,7 +6,6 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\PostController;
-use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\VerifyEmailController;
 use App\Models\User;
 
@@ -83,10 +82,10 @@ Route::group([
     'middleware' => ['jwt.verify', 'auth:api'],
     'prefix' => 'post'
 ], function () {
-    Route::get('/', [PostController::class, 'index'])->name('post.index');
-    Route::post('/', [PostController::class, 'store'])->name('post.store');
-    Route::get('/{post}', [PostController::class, 'show'])->name('post.show');
-    Route::post('/{post}', [PostController::class, 'update'])->name('post.update');
-    Route::put('/', [PostController::class, 'deletePost'])->name('post.delete');
-    Route::put('/restore', [PostController::class, 'restore'])->name('post.restore');
+    Route::get('/', [PostController::class, 'index']);
+    Route::post('/', [PostController::class, 'store']);
+    Route::get('/{post}', [PostController::class, 'show']);
+    Route::post('/{post}', [PostController::class, 'update'])->can('update', 'post');
+    Route::put('/', [PostController::class, 'deletePost'])->can('post', 'delete');
+    Route::put('/restore', [PostController::class, 'restore']);
 });
