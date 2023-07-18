@@ -75,22 +75,27 @@ class AuthController extends BaseController
         return $this->handleResponse($user, 'User successfully registered')->setStatusCode(201);
     }
 
-    public function setRole(Request $request, User $user)
+    public function create(Request $request)
     {
         $request->validate([
-            'role_ids' => 'required|array',
-            'role_ids.*' => 'integer',
-            'permission_ids' => 'required|array',
-            'permission_ids.*' => 'integer',
+            'name' => 'required|string|between:2,100',
+            'email' => 'required|string|email|max:100|unique:users',
+            'password' => 'required|string|confirmed|min:6',
+            'roles' => 'required|array',
         ]);
 
-        $roleIds = $request->input('role_ids');
-        $permissionIds = $request->input('permission_ids');
+        $user = new User;
+        $roleIds = $request->roles;
 
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->password = bcrypt($request->password);
+        $user->save();
         $user->roles()->sync($roleIds);
-        $user->permissions()->sync($permissionIds);
+        event(new Registered($user));
+        Auth::login($user);
 
-        return $this->handleResponse($user, 'User roles and permissions set successfully');
+        return $this->handleResponse($user, 'User successfully registered')->setStatusCode(201);
     }
 
 

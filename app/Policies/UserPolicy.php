@@ -11,6 +11,10 @@ class UserPolicy
 {
     use HandlesAuthorization, HasPermission;
 
+    public function create(User $user)
+    {
+        return $user->hasRole('admin');
+    }
 
     public function update(User $user, User $targetUser)
     {

@@ -15,14 +15,12 @@ trait HasPermission
 
     public function hasPermission($permission)
     {
-        $rolePermissions = $this->roles()->pluck('id');
-        $userPermissions = $this->permissions()->pluck('id');
-
-        $commonPermissions = Permission::whereIn('id', $rolePermissions)
-            ->whereIn('id', $userPermissions)
-            ->pluck('name');
-
-        return $commonPermissions->contains($permission);
+        foreach ($this->roles as $role) {
+            if ($role->permissions()->where('name', $permission)->exists()) {
+                return true;
+            }
+        }
+        return false;
     }
 
 

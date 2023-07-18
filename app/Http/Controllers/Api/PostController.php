@@ -63,6 +63,7 @@ class PostController extends BaseController
         $post->slug = $slug;
         $post->author = $user_id;
         $post->save();
+        $post->categories()->sync($categoryIds);
         if ($request->has('meta_keys') && $request->has('meta_values')) {
             $metaKeys = $request->meta_keys;
             $metaValues = $request->meta_values;
@@ -81,8 +82,6 @@ class PostController extends BaseController
                 $post_meta->save();
             }
         }
-
-        $post->categories()->sync($categoryIds);
 
         return $this->handleResponse($post, 'Post created successfully');
     }
