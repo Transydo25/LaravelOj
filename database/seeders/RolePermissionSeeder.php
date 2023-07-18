@@ -23,12 +23,12 @@ class RolePermissionSeeder extends Seeder
         DB::table('permissions')->insert($permissions);
 
         $rolePermissions = [
-            ['role_id' => 1, 'permission_id' => 1], // admin - view
-            ['role_id' => 1, 'permission_id' => 2], // admin - update
-            ['role_id' => 1, 'permission_id' => 3], // admin - delete
-            ['role_id' => 2, 'permission_id' => 1], // user - view
-            ['role_id' => 2, 'permission_id' => 2], // user - update
-            ['role_id' => 2, 'permission_id' => 3], // user - delete
+            ['role_id' => 1, 'permission_id' => 1],
+            ['role_id' => 1, 'permission_id' => 2],
+            ['role_id' => 1, 'permission_id' => 3],
+            ['role_id' => 2, 'permission_id' => 1],
+            ['role_id' => 2, 'permission_id' => 2],
+            ['role_id' => 2, 'permission_id' => 3],
         ];
         DB::table('role_permission')->insert($rolePermissions);
     }

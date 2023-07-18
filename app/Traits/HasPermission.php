@@ -10,7 +10,7 @@ trait HasPermission
 {
     public function hasRole($role)
     {
-        return $this->roles()->where('name', $role);
+        return $this->roles()->where('name', $role)->exists();
     }
 
     public function roles()

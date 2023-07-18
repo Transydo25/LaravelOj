@@ -19,11 +19,6 @@ class UserPolicy
 
     public function update(User $user, User $targetUser)
     {
-        if ($user->hasRole('admin')) {
-            return true;
-        } else {
-            return false;
-        }
         return $user->hasRole('admin') || $user->id === $targetUser->id;
     }
 

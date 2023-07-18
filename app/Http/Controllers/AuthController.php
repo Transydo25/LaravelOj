@@ -68,6 +68,7 @@ class AuthController extends BaseController
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
         $user->save();
+        $user->roles()->sync('2');
         event(new Registered($user));
         Auth::login($user);
 
