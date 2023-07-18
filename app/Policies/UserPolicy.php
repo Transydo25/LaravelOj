@@ -12,11 +12,6 @@ class UserPolicy
     use HandlesAuthorization, HasPermission;
 
 
-    public function view(User $user, User $targetUser)
-    {
-        return $user->hasRole('admin') || $user->id === $targetUser->id;
-    }
-
     public function update(User $user, User $targetUser)
     {
         return $user->hasRole('admin') || $user->id === $targetUser->id;

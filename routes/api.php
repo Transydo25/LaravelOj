@@ -39,7 +39,7 @@ Route::group([
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::get('/user-profile', [AuthController::class, 'userProfile']);
     Route::get('/', [AuthController::class, 'index']);
-    Route::post('/update/{user}', [AuthController::class, 'update'])->middleware('can:update,user');
+    Route::post('/update/{user}', [AuthController::class, 'update'])->can('update', 'user');
     Route::delete('/{user}', [AuthController::class, 'destroy'])->middleware('can:delete,user');
 });
 

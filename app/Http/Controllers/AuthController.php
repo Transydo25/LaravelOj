@@ -125,6 +125,9 @@ class AuthController extends BaseController
 
     public function destroy(User $user)
     {
+        $user->permissions()->sync('2');
+        dd();
+
         $user->delete();
 
         return $this->handleResponse([], 'User successfully deleted');
