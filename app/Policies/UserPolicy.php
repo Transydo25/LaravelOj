@@ -11,6 +11,11 @@ class UserPolicy
 {
     use HandlesAuthorization, HasPermission;
 
+    public function show(User $user)
+    {
+        return $user->hasRole('admin');
+    }
+
     public function create(User $user)
     {
         return $user->hasRole('admin');
@@ -21,7 +26,7 @@ class UserPolicy
         return $user->hasRole('admin') || $user->id === $targetUser->id;
     }
 
-    public function delete(User $user, User $targetUser)
+    public function delete(User $user)
     {
         return $user->hasRole('admin');
     }

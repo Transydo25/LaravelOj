@@ -7,35 +7,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
+use App\Traits\HasPermission;
+
 
 class AuthController extends BaseController
 {
+    use HasPermission;
 
     public function __construct()
     {
         $this->middleware('auth:api', ['except' => ['login', 'register']]);
     }
 
-    public function index(Request $request)
-    {
-        $sort = $request->input('sort');
-        $sort_types = ['desc', 'asc'];
-        $sort_option = ['title', 'created_at', 'updated_at'];
-        $sort_by = $request->input('sort_by');
-        $sort = in_array($sort, $sort_types) ? $sort : 'desc';
-        $sort_by = in_array($sort_by, $sort_option) ? $sort_by : 'created_at';
-        $search = $request->input('query');
-        $limit = request()->input('limit') ?? config('app.paginate');
-
-        $query = User::select('*');
-
-        if ($search) {
-            $query = $query->where('title', 'LIKE', '%' . $search . '%');
-        }
-        $users = $query->orderBy($sort_by, $sort)->paginate($limit);
-
-        return $this->handleResponse($users, 'users data');
-    }
 
     public function login(Request $request)
     {
@@ -75,28 +58,7 @@ class AuthController extends BaseController
         return $this->handleResponse($user, 'User successfully registered')->setStatusCode(201);
     }
 
-    public function create(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|between:2,100',
-            'email' => 'required|string|email|max:100|unique:users',
-            'password' => 'required|string|confirmed|min:6',
-            'roles' => 'required|array',
-        ]);
 
-        $user = new User;
-        $roleIds = $request->roles;
-
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->password = bcrypt($request->password);
-        $user->save();
-        $user->roles()->sync($roleIds);
-        event(new Registered($user));
-        Auth::login($user);
-
-        return $this->handleResponse($user, 'User successfully registered')->setStatusCode(201);
-    }
 
 
     public function logout()
@@ -129,8 +91,12 @@ class AuthController extends BaseController
         ]);
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request)
     {
+        if (!$request->user()->hasPermission('update')) {
+            abort(403, 'Unauthorized');
+        }
+
         $request->validate([
             'name' => 'required|string|between:2,100',
             'old_password' => 'required|string|min:6',
@@ -143,12 +109,5 @@ class AuthController extends BaseController
         $user->save();
 
         return $this->handleResponse($user, 'User successfully updated')->setStatusCode(201);
-    }
-
-    public function destroy(User $user)
-    {
-        $user->delete();
-
-        return $this->handleResponse([], 'User successfully deleted');
     }
 }

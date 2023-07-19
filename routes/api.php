@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\PostController;
+use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\VerifyEmailController;
 use App\Models\User;
 use App\Models\Post;
@@ -38,10 +39,18 @@ Route::group([
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::get('/user-profile', [AuthController::class, 'userProfile']);
-    Route::get('/', [AuthController::class, 'index']);
-    Route::post('/create', [AuthController::class, 'create'])->can('create', User::class);
-    Route::post('/update/{user}', [AuthController::class, 'update'])->can('update', 'user');
-    Route::delete('/{user}', [AuthController::class, 'destroy'])->middleware('can:delete,user');
+    Route::post('/update', [AuthController::class, 'update'])->can('update', User::class);
+});
+
+Route::group([
+    'middleware' => ['jwt.verify', 'auth:api'],
+    'prefix' => 'user'
+], function () {
+    Route::get('/', [UserController::class, 'index'])->can('show', User::class);
+    Route::post('/', [UserController::class, 'create'])->can('create', User::class);
+    Route::get('/{user}', [UserController::class, 'show'])->can('show', 'user');
+    Route::post('/{user}', [UserController::class, 'update'])->can('update', 'user');
+    Route::delete('/{user}', [UserController::class, 'destroy'])->can('delete', User::class);
 });
 
 //Mail
@@ -84,7 +93,7 @@ Route::group([
     'prefix' => 'post'
 ], function () {
     Route::get('/', [PostController::class, 'index']);
-    Route::post('/', [PostController::class, 'store']);
+    Route::post('/', [PostController::class, 'store'])->can('create', Post::class);
     Route::get('/{post}', [PostController::class, 'show']);
     Route::post('/{post}', [PostController::class, 'update'])->can('update', 'post');
     Route::put('/', [PostController::class, 'deletePost'])->can('delete', Post::class);

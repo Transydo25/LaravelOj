@@ -25,7 +25,6 @@ class PostController extends BaseController
         $sort_by = in_array($sort_by, $sort_option) ? $sort_by : 'created_at';
         $search = $request->input('query');
         $limit = request()->input('limit') ?? config('app.paginate');
-
         $query = Post::select('*');
 
         if ($status) {
@@ -41,6 +40,10 @@ class PostController extends BaseController
 
     public function store(Request $request)
     {
+        if (!Auth::user()->hasPermission('create')) {
+            abort(403, 'Unauthorized');
+        }
+
         $request->validate([
             'title' => 'required|string|max: 255',
             'content' => 'string',
@@ -97,6 +100,10 @@ class PostController extends BaseController
 
     public function update(Request $request, Post $post)
     {
+        if (!Auth::user()->hasPermission('update')) {
+            abort(403, 'Unauthorized');
+        }
+
         $request->validate([
             'title' => 'required|string|max: 255',
             'content' => 'string',
@@ -151,6 +158,10 @@ class PostController extends BaseController
 
     public function restore(Request $request)
     {
+        if (!Auth::user()->hasPermission('update')) {
+            abort(403, 'Unauthorized');
+        }
+
         $request->validate([
             'ids' => 'required',
         ]);
@@ -170,6 +181,10 @@ class PostController extends BaseController
 
     public function deletePost(Request $request)
     {
+        if (!Auth::user()->hasPermission('delete')) {
+            abort(403, 'Unauthorized');
+        }
+
         $request->validate([
             'ids' => 'required',
             'type' => 'required|in:delete,force_delete',

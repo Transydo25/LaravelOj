@@ -23,8 +23,6 @@ trait HasPermission
         return false;
     }
 
-
-
     public function roles()
     {
         return $this->belongsToMany(Role::class);

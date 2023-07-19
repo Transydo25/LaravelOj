@@ -21,7 +21,7 @@ class PostPolicy
 
     public function create(User $user)
     {
-        //
+        return $user->hasRole('editor');
     }
 
     public function update(User $user, Post $post)
@@ -34,11 +34,9 @@ class PostPolicy
 
     public function delete(User $user)
     {
-        return $user->hasRole('editor');
     }
 
     public function restore(User $user)
     {
-        return $user->hasRole('editor');
     }
 }
