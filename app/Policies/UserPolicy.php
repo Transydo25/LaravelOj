@@ -11,23 +11,36 @@ class UserPolicy
 {
     use HandlesAuthorization, HasPermission;
 
-    public function show(User $user)
+    public function before(User $user)
     {
-        return $user->hasRole('admin');
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+    }
+
+    public function viewAny(User $user)
+    {
+    }
+
+    public function view(User $user, User $targetUser)
+    {
+        if ($user->hasRole('user')) {
+            return $user->id === $targetUser->id;
+        }
     }
 
     public function create(User $user)
     {
-        return $user->hasRole('admin');
     }
 
     public function update(User $user, User $targetUser)
     {
-        return $user->hasRole('admin') || $user->id === $targetUser->id;
+        if ($user->hasRole('user')) {
+            return $user->id === $targetUser->id;
+        }
     }
 
     public function delete(User $user)
     {
-        return $user->hasRole('admin');
     }
 }

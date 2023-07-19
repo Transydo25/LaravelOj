@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\VerifyEmailController;
 use App\Models\User;
 use App\Models\Post;
+use App\Models\Category;
 
 
 
@@ -39,18 +40,18 @@ Route::group([
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh', [AuthController::class, 'refresh']);
     Route::get('/user-profile', [AuthController::class, 'userProfile']);
-    Route::post('/update', [AuthController::class, 'update'])->can('update', User::class);
+    Route::post('/update', [AuthController::class, 'update']);
 });
 
 Route::group([
     'middleware' => ['jwt.verify', 'auth:api'],
     'prefix' => 'user'
 ], function () {
-    Route::get('/', [UserController::class, 'index'])->can('show', User::class);
+    Route::get('/', [UserController::class, 'index'])->can('viewAny', User::class);
     Route::post('/', [UserController::class, 'create'])->can('create', User::class);
-    Route::get('/{user}', [UserController::class, 'show'])->can('show', 'user');
+    Route::get('/{user}', [UserController::class, 'show'])->can('view', 'user');
     Route::post('/{user}', [UserController::class, 'update'])->can('update', 'user');
-    Route::delete('/{user}', [UserController::class, 'destroy'])->can('delete', User::class);
+    Route::delete('/{user}', [UserController::class, 'destroy'])->can('delete', 'user');
 });
 
 //Mail
@@ -80,11 +81,11 @@ Route::group([
     'prefix' => 'category'
 ], function () {
     Route::get('/', [CategoryController::class, 'index']);
-    Route::post('/', [CategoryController::class, 'store']);
+    Route::post('/', [CategoryController::class, 'store'])->can('create', Category::class);
     Route::get('/{category}', [CategoryController::class, 'show']);
-    Route::post('/{category}', [CategoryController::class, 'update']);
-    Route::put('/', [CategoryController::class, 'deleteCategory']);
-    Route::put('/restore', [CategoryController::class, 'restore']);
+    Route::post('/{category}', [CategoryController::class, 'update'])->can('update', 'category');
+    Route::put('/', [CategoryController::class, 'deleteCategory'])->can('delete', Category::class);
+    Route::put('/restore', [CategoryController::class, 'restore'])->can('restore', Category::class);
 });
 
 //Post

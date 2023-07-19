@@ -2,13 +2,12 @@
 
 namespace App\Policies;
 
+use App\Models\Category;
 use App\Models\User;
-use App\Models\Post;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use App\Traits\HasPermission;
 
-
-class PostPolicy
+class CategoryPolicy
 {
     use HandlesAuthorization, HasPermission;
 
@@ -24,16 +23,22 @@ class PostPolicy
         return $user->hasRole('editor');
     }
 
-    public function update(User $user, Post $post)
+    public function update(User $user, Category $category)
     {
         return $user->hasRole('editor');
     }
 
-    public function delete(User $user)
+    public function delete(User $user, Category $category)
     {
     }
 
-    public function restore(User $user)
+    public function restore(User $user, Category $category)
     {
+        //
+    }
+
+    public function forceDelete(User $user, Category $category)
+    {
+        //
     }
 }

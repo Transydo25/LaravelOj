@@ -42,6 +42,10 @@ class CategoryController extends BaseController
 
     public function store(CategoryRequest $request, Category $category)
     {
+        if (!Auth::user()->hasPermission('create')) {
+            abort(403, 'Unauthorized');
+        }
+
         $slug = Str::slug($request->name);
         $user_id = Auth::id();
         $image = $request->image;
@@ -72,6 +76,10 @@ class CategoryController extends BaseController
 
     public function update(CategoryRequest $request, Category $category)
     {
+        if (!Auth::user()->hasPermission('update')) {
+            abort(403, 'Unauthorized');
+        }
+
         $slug = Str::slug($request->name);
         $image = $request->image;
 
@@ -97,6 +105,10 @@ class CategoryController extends BaseController
 
     public function restore(Request $request)
     {
+        if (!Auth::user()->hasPermission('update')) {
+            abort(403, 'Unauthorized');
+        }
+
         $request->validate([
             'ids' => 'required',
         ]);
@@ -116,6 +128,10 @@ class CategoryController extends BaseController
 
     public function deleteCategory(Request $request)
     {
+        if (!Auth::user()->hasPermission('delete')) {
+            abort(403, 'Unauthorized');
+        }
+
         $request->validate([
             'ids' => 'required',
             'type' => 'required|in:delete,force_delete',

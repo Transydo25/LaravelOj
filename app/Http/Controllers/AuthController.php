@@ -93,10 +93,6 @@ class AuthController extends BaseController
 
     public function update(Request $request)
     {
-        if (!$request->user()->hasPermission('update')) {
-            abort(403, 'Unauthorized');
-        }
-
         $request->validate([
             'name' => 'required|string|between:2,100',
             'old_password' => 'required|string|min:6',
