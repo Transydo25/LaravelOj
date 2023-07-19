@@ -12,6 +12,13 @@ class PostPolicy
 {
     use HandlesAuthorization, HasPermission;
 
+    public function before(User $user)
+    {
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+    }
+
     public function create(User $user)
     {
         //
@@ -25,7 +32,12 @@ class PostPolicy
         return $user->hasRole('editor');
     }
 
-    public function delete(User $user, Post $post)
+    public function delete(User $user)
+    {
+        return $user->hasRole('editor');
+    }
+
+    public function restore(User $user)
     {
         return $user->hasRole('editor');
     }

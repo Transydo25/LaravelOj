@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\VerifyEmailController;
 use App\Models\User;
+use App\Models\Post;
 
 
 
@@ -57,11 +58,11 @@ Route::group([
     'middleware' => 'auth:api',
     'prefix' => 'media'
 ], function () {
-    Route::get('/', [MediaController::class, 'index'])->name('media.index');
-    Route::post('/', [MediaController::class, 'store'])->name('media.store');
-    Route::get('/{media}', [MediaController::class, 'show'])->name('media.show');
-    Route::post('/{media}', [MediaController::class, 'update'])->name('media.update');
-    Route::delete('/{media}', [MediaController::class, 'destroy'])->name('media.destroy');
+    Route::get('/', [MediaController::class, 'index']);
+    Route::post('/', [MediaController::class, 'store']);
+    Route::get('/{media}', [MediaController::class, 'show']);
+    Route::post('/{media}', [MediaController::class, 'update']);
+    Route::delete('/{media}', [MediaController::class, 'destroy']);
 });
 
 //Category
@@ -69,12 +70,12 @@ Route::group([
     'middleware' => ['jwt.verify', 'auth:api'],
     'prefix' => 'category'
 ], function () {
-    Route::get('/', [CategoryController::class, 'index'])->name('category.index');
-    Route::post('/', [CategoryController::class, 'store'])->name('category.store');
-    Route::get('/{category}', [CategoryController::class, 'show'])->name('category.show');
-    Route::post('/{category}', [CategoryController::class, 'update'])->name('category.update');
-    Route::put('/', [CategoryController::class, 'deleteCategory'])->name('category.delete');
-    Route::put('/restore', [CategoryController::class, 'restore'])->name('category.restore');
+    Route::get('/', [CategoryController::class, 'index']);
+    Route::post('/', [CategoryController::class, 'store']);
+    Route::get('/{category}', [CategoryController::class, 'show']);
+    Route::post('/{category}', [CategoryController::class, 'update']);
+    Route::put('/', [CategoryController::class, 'deleteCategory']);
+    Route::put('/restore', [CategoryController::class, 'restore']);
 });
 
 //Post
@@ -86,6 +87,6 @@ Route::group([
     Route::post('/', [PostController::class, 'store']);
     Route::get('/{post}', [PostController::class, 'show']);
     Route::post('/{post}', [PostController::class, 'update'])->can('update', 'post');
-    Route::put('/', [PostController::class, 'deletePost'])->can('post', 'delete');
-    Route::put('/restore', [PostController::class, 'restore']);
+    Route::put('/', [PostController::class, 'deletePost'])->can('delete', Post::class);
+    Route::put('/restore', [PostController::class, 'restore'])->can('restore', Post::class);
 });
