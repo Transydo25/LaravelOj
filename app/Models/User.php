@@ -8,15 +8,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use App\Traits\HasPermission;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 
 class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 {
     use HasFactory, Notifiable, HasPermission;
+    use SoftDeletes;
 
     protected $fillable = [
         'name',
         'email',
         'password',
+        'deleted_at',
     ];
 
 
@@ -44,5 +48,10 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     public function roles()
     {
         return $this->belongsToMany(Role::class);
+    }
+
+    public function userMeta()
+    {
+        return $this->hasMany(UserMeta::class);
     }
 }

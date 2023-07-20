@@ -5,7 +5,7 @@ namespace App\Policies;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use App\Traits\HasPermission;
-
+use Illuminate\Auth\Access\Response;
 
 class UserPolicy
 {
@@ -25,7 +25,9 @@ class UserPolicy
     public function view(User $user, User $targetUser)
     {
         if ($user->hasRole('user')) {
-            return $user->id === $targetUser->id;
+            return $user->id === $targetUser->id
+                ? Response::allow()
+                : Response::deny('You do not own this post.');
         }
     }
 
@@ -41,6 +43,10 @@ class UserPolicy
     }
 
     public function delete(User $user)
+    {
+    }
+
+    public function restore(User $user)
     {
     }
 }

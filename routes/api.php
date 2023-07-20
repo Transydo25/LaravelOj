@@ -48,10 +48,15 @@ Route::group([
     'prefix' => 'user'
 ], function () {
     Route::get('/', [UserController::class, 'index'])->can('viewAny', User::class);
+    Route::post('/favorite', [UserController::class, 'addFavorite']);
+    Route::post('/sub_fav', [UserController::class, 'subFavorite']);
+    Route::get('/favorite', [UserController::class, 'showFavorite']);
     Route::post('/', [UserController::class, 'create'])->can('create', User::class);
     Route::get('/{user}', [UserController::class, 'show'])->can('view', 'user');
     Route::post('/{user}', [UserController::class, 'update'])->can('update', 'user');
-    Route::delete('/{user}', [UserController::class, 'destroy'])->can('delete', 'user');
+    Route::put('/', [UserController::class, 'destroy'])->can('delete', 'user');
+    Route::put('/restore', [UserController::class, 'restore'])->can('restore', User::class);
+    Route::get('/meta', [UserController::class, 'profile']);
 });
 
 //Mail

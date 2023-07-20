@@ -43,7 +43,7 @@ class CategoryController extends BaseController
     public function store(CategoryRequest $request, Category $category)
     {
         if (!Auth::user()->hasPermission('create')) {
-            abort(403, 'Unauthorized');
+            return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
         $slug = Str::slug($request->name);
@@ -77,7 +77,7 @@ class CategoryController extends BaseController
     public function update(CategoryRequest $request, Category $category)
     {
         if (!Auth::user()->hasPermission('update')) {
-            abort(403, 'Unauthorized');
+            return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
         $slug = Str::slug($request->name);
@@ -106,7 +106,7 @@ class CategoryController extends BaseController
     public function restore(Request $request)
     {
         if (!Auth::user()->hasPermission('update')) {
-            abort(403, 'Unauthorized');
+            return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
         $request->validate([
@@ -129,7 +129,7 @@ class CategoryController extends BaseController
     public function deleteCategory(Request $request)
     {
         if (!Auth::user()->hasPermission('delete')) {
-            abort(403, 'Unauthorized');
+            return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
         $request->validate([

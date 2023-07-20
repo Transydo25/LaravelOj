@@ -41,7 +41,7 @@ class PostController extends BaseController
     public function store(Request $request)
     {
         if (!Auth::user()->hasPermission('create')) {
-            abort(403, 'Unauthorized');
+            return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
         $request->validate([
@@ -67,25 +67,25 @@ class PostController extends BaseController
         $post->author = $user_id;
         $post->save();
         $post->categories()->sync($categoryIds);
-        if ($request->has('meta_keys') && $request->has('meta_values')) {
-            $metaKeys = $request->meta_keys;
-            $metaValues = $request->meta_values;
-            foreach ($metaKeys as $index => $metaKey) {
-                $post_meta = new PostMeta;
-                $value = $metaValues[$index];
-                $post_meta->post_id = $post->id;
-                $post_meta->key = $metaKey;
-                if (is_file($value)) {
-                    $imageName = Str::random(10);
-                    $path = $value->storeAs('public/post/' . date('Y/m/d'), $imageName);
-                    $post_meta->value = asset(Storage::url($path));
-                } else {
-                    $post_meta->value = $value;
-                }
-                $post_meta->save();
-            }
+        if (!($request->has('meta_keys') && $request->has('meta_values'))) {
+            return $this->handleResponse($post, 'Post created successfully');
         }
-
+        $meta_keys = $request->meta_keys;
+        $meta_values = $request->meta_values;
+        foreach ($meta_keys as $index => $metaKey) {
+            $post_meta = new PostMeta;
+            $value = $meta_values[$index];
+            $post_meta->post_id = $post->id;
+            $post_meta->key = $metaKey;
+            if (is_file($value)) {
+                $image_name = Str::random(10);
+                $path = $value->storeAs('public/post/' . date('Y/m/d'), $image_name);
+                $post_meta->value = asset(Storage::url($path));
+            } else {
+                $post_meta->value = $value;
+            }
+            $post_meta->save();
+        }
         return $this->handleResponse($post, 'Post created successfully');
     }
 
@@ -101,7 +101,7 @@ class PostController extends BaseController
     public function update(Request $request, Post $post)
     {
         if (!Auth::user()->hasPermission('update')) {
-            abort(403, 'Unauthorized');
+            return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
         $request->validate([
@@ -120,7 +120,9 @@ class PostController extends BaseController
 
         $post->title = $request->title;
         $post->content = $request->content;
-        $post->status = $request->status;
+        if ((Auth::user()->hasRole('editor') && Auth::id() == $post->author) || Auth::user()->hasRole('admin')) {
+            $post->status = $request->status;
+        }
         $post->type = $request->type;
         $post->slug = $slug;
         $post->categories()->sync($categoryIds);
@@ -159,7 +161,7 @@ class PostController extends BaseController
     public function restore(Request $request)
     {
         if (!Auth::user()->hasPermission('update')) {
-            abort(403, 'Unauthorized');
+            return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
         $request->validate([
@@ -182,7 +184,7 @@ class PostController extends BaseController
     public function deletePost(Request $request)
     {
         if (!Auth::user()->hasPermission('delete')) {
-            abort(403, 'Unauthorized');
+            return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
         $request->validate([
