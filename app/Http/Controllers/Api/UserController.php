@@ -216,7 +216,7 @@ class UserController extends BaseController
 
         if ($user_meta) {
             $current_values = json_decode($user_meta->value, true);
-            $new_values = array_unique(array_merge($current_values, $meta_values));
+            $new_values = array_values(array_unique(array_merge($current_values, $meta_values)));
             $user_meta->value = json_encode($new_values);
             $user_meta->save();
         } else {
@@ -245,7 +245,7 @@ class UserController extends BaseController
             return $this->handleResponse([], 'UserMeta record not found');
         }
         $meta_values = json_decode($user_meta->value, true);
-        $updated_values = array_diff($meta_values, $request->meta_values);
+        $updated_values = array_values(array_diff($meta_values, $request->meta_values));
 
         $user_meta->value = json_encode($updated_values);
         $user_meta->save();
