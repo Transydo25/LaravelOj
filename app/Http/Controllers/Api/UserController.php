@@ -200,57 +200,52 @@ class UserController extends BaseController
         }
     }
 
-    public function addFavorite(Request $request)
+    public function manageFavorite(Request $request)
     {
         $request->validate([
-            'meta_keys' => 'required|string',
-            'meta_values' => 'required|array',
+            'type' => 'required|in:add,sub',
+            'meta_data' => 'required|array',
         ]);
 
         $user_id = Auth::id();
-        $meta_key = $request->meta_keys;
-        $meta_values = $request->meta_values;
-        $user_meta = UserMeta::where('user_id', $user_id)
-            ->where('key', $meta_key)
-            ->first();
+        $type = $request->type;
+        $meta_data = $request->meta_data;
+        $responseMessage = '';
 
-        if ($user_meta) {
-            $current_values = json_decode($user_meta->value, true);
-            $new_values = array_values(array_unique(array_merge($current_values, $meta_values)));
-            $user_meta->value = json_encode($new_values);
-            $user_meta->save();
-        } else {
-            $user_meta = new UserMeta;
-            $user_meta->user_id = $user_id;
-            $user_meta->key = $meta_key;
-            $user_meta->value = json_encode($meta_values);
-            $user_meta->save();
+        foreach ($meta_data as $meta_key => $meta_values) {
+            $user_meta = UserMeta::where('user_id', $user_id)
+                ->where('key', $meta_key)
+                ->first();
+
+            if ($type === 'add') {
+                if ($user_meta) {
+                    $current_values = json_decode($user_meta->value, true);
+                    $new_values = array_values(array_unique(array_merge($current_values, $meta_values)));
+                    $user_meta->value = json_encode($new_values);
+                    $user_meta->save();
+                } else {
+                    $user_meta = new UserMeta;
+                    $user_meta->user_id = $user_id;
+                    $user_meta->key = $meta_key;
+                    $user_meta->value = json_encode($meta_values);
+                    $user_meta->save();
+                }
+                $responseMessage = 'Add favorite successfully';
+            }
+            if ($type === 'sub') {
+                if (!$user_meta) {
+                    return $this->handleResponse([], 'UserMeta record not found');
+                }
+                $stored_values = json_decode($user_meta->value, true);
+                $updated_values = array_values(array_diff($stored_values, $meta_values));
+
+                $user_meta->value = json_encode($updated_values);
+                $user_meta->save();
+                $responseMessage = 'Value removed from favorites';
+            }
         }
 
-        return $this->handleResponse([], 'Add favorite successfully');
-    }
-
-
-    public function subFavorite(Request $request)
-    {
-        $request->validate([
-            'meta_keys' => 'required|string',
-            'meta_values' => 'required|array',
-        ]);
-
-        $user_meta = UserMeta::where('user_id', Auth::id())
-            ->where('key', $request->meta_keys)
-            ->first();
-        if (!$user_meta) {
-            return $this->handleResponse([], 'UserMeta record not found');
-        }
-        $meta_values = json_decode($user_meta->value, true);
-        $updated_values = array_values(array_diff($meta_values, $request->meta_values));
-
-        $user_meta->value = json_encode($updated_values);
-        $user_meta->save();
-
-        return $this->handleResponse([], 'Value removed from favorites');
+        return $this->handleResponse([], $responseMessage);
     }
 
     public function showFavorite()

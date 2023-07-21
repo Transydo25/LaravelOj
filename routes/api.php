@@ -47,10 +47,11 @@ Route::group([
     'middleware' => ['jwt.verify', 'auth:api'],
     'prefix' => 'user'
 ], function () {
+    //Favorites
     Route::get('/', [UserController::class, 'index'])->can('viewAny', User::class);
-    Route::post('/favorite', [UserController::class, 'addFavorite']);
-    Route::post('/sub_fav', [UserController::class, 'subFavorite']);
     Route::get('/favorite', [UserController::class, 'showFavorite']);
+    Route::post('/favorite', [UserController::class, 'manageFavorite']);
+    //User
     Route::post('/', [UserController::class, 'create'])->can('create', User::class);
     Route::get('/{user}', [UserController::class, 'show'])->can('view', 'user');
     Route::post('/{user}', [UserController::class, 'update'])->can('update', 'user');
