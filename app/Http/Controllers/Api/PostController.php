@@ -6,9 +6,12 @@ use App\Http\Controllers\BaseController;
 use Illuminate\Http\Request;
 use App\Models\Post;
 use App\Models\PostMeta;
+use App\Models\PostDetail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Stichoza\GoogleTranslate\GoogleTranslate;
+
 
 class PostController extends BaseController
 {
@@ -58,6 +61,8 @@ class PostController extends BaseController
         $slug = Str::slug($request->title);
         $categoryIds = $request->categories;
         $user_id = Auth::id();
+        $languages = ['ko', 'zh-CN', 'zh-TW', 'th', 'ja', 'vi'];
+        $translate = new GoogleTranslate();
 
         $post->title = $request->title;
         $post->content = $request->content;
@@ -67,6 +72,14 @@ class PostController extends BaseController
         $post->author = $user_id;
         $post->save();
         $post->categories()->sync($categoryIds);
+        foreach ($languages as $language) {
+            $post_detail = new PostDetail;
+            $post_detail->title = $translate->setSource('en')->setTarget($language)->translate($post->title);
+            $post_detail->content = $translate->setSource('en')->setTarget($language)->translate($post->content);
+            $post_detail->post_id = $post->id;
+            $post_detail->lang = $language;
+            $post_detail->save();
+        }
         if (!($request->has('meta_keys') && $request->has('meta_values'))) {
             return $this->handleResponse($post, 'Post created successfully');
         }
@@ -89,14 +102,22 @@ class PostController extends BaseController
         return $this->handleResponse($post, 'Post created successfully');
     }
 
-
-    public function show(Post $post)
+    public function show(Request $request, Post $post)
     {
+        $request->validate([
+            'lang' => 'in:ko,zh-CN,zh-TW,th,ja,vi,en',
+        ]);
+
+        $language = $request->language;
+        if ($language) {
+            $post->post_detail = $post->postDetail()->where('lang', $language)->get();
+        }
         $post->categories = $post->categories()->where('status', 'active')->pluck('name');
         $post->post_meta = $post->postMeta()->get();
 
         return $this->handleResponse($post, 'Post data details');
     }
+
 
     public function update(Request $request, Post $post)
     {
@@ -117,6 +138,8 @@ class PostController extends BaseController
         $value = $request->meta_value;
         $slug = Str::slug($request->title);
         $categoryIds = $request->categories;
+        $languages = ['ko', 'zh-CN', 'zh-TW', 'th', 'ja', 'vi'];
+        $translate = new GoogleTranslate();
 
         $post->title = $request->title;
         $post->content = $request->content;
@@ -127,6 +150,15 @@ class PostController extends BaseController
         $post->slug = $slug;
         $post->categories()->sync($categoryIds);
         $post->save();
+        $post->postDetail()->delete();
+        foreach ($languages as $language) {
+            $post_detail = new PostDetail;
+            $post_detail->title = $translate->setSource('en')->setTarget($language)->translate($post->title);
+            $post_detail->content = $translate->setSource('en')->setTarget($language)->translate($post->content);
+            $post_detail->post_id = $post->id;
+            $post_detail->lang = $language;
+            $post_detail->save();
+        }
         if ($request->has('meta_keys') && $request->has('meta_values')) {
             $post_metas = $post->postMeta()->get();
             foreach ($post_metas as $post_meta) {
