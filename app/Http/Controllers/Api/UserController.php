@@ -205,53 +205,50 @@ class UserController extends BaseController
         $request->validate([
             'type' => 'required|in:add,sub',
             'meta_data' => 'required|array',
+            'meta_data.favorite_post' => 'required|array',
         ]);
 
         $user_id = Auth::id();
         $type = $request->type;
-        $meta_data = $request->meta_data;
-        $responseMessage = '';
+        $favorite_post = $request->meta_data['favorite_post'];
+        $user_meta = UserMeta::where('user_id', $user_id)
+            ->where('key', 'favorite_post')
+            ->first();
 
-        foreach ($meta_data as $meta_key => $meta_values) {
-            $user_meta = UserMeta::where('user_id', $user_id)
-                ->where('key', $meta_key)
-                ->first();
-
-            if ($type === 'add') {
-                if ($user_meta) {
-                    $current_values = json_decode($user_meta->value, true);
-                    $new_values = array_values(array_unique(array_merge($current_values, $meta_values)));
-                    $user_meta->value = json_encode($new_values);
-                    $user_meta->save();
-                } else {
-                    $user_meta = new UserMeta;
-                    $user_meta->user_id = $user_id;
-                    $user_meta->key = $meta_key;
-                    $user_meta->value = json_encode($meta_values);
-                    $user_meta->save();
-                }
-                $responseMessage = 'Add favorite successfully';
-            }
-            if ($type === 'sub') {
-                if (!$user_meta) {
-                    return $this->handleResponse([], 'UserMeta record not found');
-                }
-                $stored_values = json_decode($user_meta->value, true);
-                $updated_values = array_values(array_diff($stored_values, $meta_values));
-
-                $user_meta->value = json_encode($updated_values);
+        if ($type === 'add') {
+            if ($user_meta) {
+                $current_values = json_decode($user_meta->value, true);
+                $new_values = array_values(array_unique(array_merge($current_values, $favorite_post)));
+                $user_meta->value = json_encode($new_values);
                 $user_meta->save();
-                $responseMessage = 'Value removed from favorites';
+            } else {
+                $user_meta = new UserMeta;
+                $user_meta->user_id = $user_id;
+                $user_meta->key = 'favorite_post';
+                $user_meta->value = json_encode($favorite_post);
+                $user_meta->save();
             }
-        }
 
-        return $this->handleResponse([], $responseMessage);
+            return $this->handleResponse([], 'Add favorite successfully');
+        }
+        if ($type === 'sub') {
+            if (!$user_meta) {
+                return $this->handleResponse([], 'UserMeta record not found');
+            }
+            $stored_values = json_decode($user_meta->value, true);
+            $updated_values = array_values(array_diff($stored_values, $favorite_post));
+
+            $user_meta->value = json_encode($updated_values);
+            $user_meta->save();
+
+            return $this->handleResponse([], 'Value removed from favorites');
+        }
     }
 
     public function showFavorite()
     {
         $user_meta = UserMeta::where('user_id', Auth::id())
-            ->where('key', 'favorite')
+            ->where('key', 'favorite_post')
             ->first();
 
         if (!$user_meta) {
