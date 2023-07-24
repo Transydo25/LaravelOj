@@ -230,8 +230,6 @@ class PostController extends BaseController
         $posts = Post::withTrashed()->whereIn('id', $ids)->get();
 
         foreach ($posts as $post) {
-            $post->status = 'archived';
-            $post->save();
             if ($type === 'force_delete') {
                 $post_metas = $post->postMeta()->get();
                 foreach ($post_metas as $post_meta) {
@@ -243,6 +241,8 @@ class PostController extends BaseController
                 }
                 $post->forceDelete();
             } else {
+                $post->status = 'archived';
+                $post->save();
                 $post->delete();
             }
         }

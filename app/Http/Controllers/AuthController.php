@@ -9,7 +9,6 @@ use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use App\Traits\HasPermission;
 
-
 class AuthController extends BaseController
 {
     use HasPermission;
@@ -18,7 +17,6 @@ class AuthController extends BaseController
     {
         $this->middleware('auth:api', ['except' => ['login', 'register']]);
     }
-
 
     public function login(Request $request)
     {
@@ -58,9 +56,6 @@ class AuthController extends BaseController
         return $this->handleResponse($user, 'User successfully registered')->setStatusCode(201);
     }
 
-
-
-
     public function logout()
     {
         auth()->logout();
@@ -68,18 +63,15 @@ class AuthController extends BaseController
         return $this->handleResponse([], 'User successfully signed out');
     }
 
-
     public function refresh()
     {
         return $this->createNewToken(auth()->refresh());
     }
 
-
     public function userProfile()
     {
         return response()->json(auth()->user());
     }
-
 
     protected function createNewToken($token)
     {
