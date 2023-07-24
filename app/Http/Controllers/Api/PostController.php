@@ -102,7 +102,7 @@ class PostController extends BaseController
             $post_meta->key = $metaKey;
             if (is_file($value)) {
                 $image_name = Str::random(10);
-                $path = $value->storeAs('public/post/' . date('Y/m/d'), $image_name);
+                $path = $value->storeAs('public/posts/' . date('Y/m/d'), $image_name);
                 $post_meta->value = asset(Storage::url($path));
             } else {
                 $post_meta->value = $value;
@@ -207,7 +207,7 @@ class PostController extends BaseController
                 $post_meta->key = $metaKey;
                 if (is_file($value)) {
                     $imageName = Str::random(10);
-                    $path = $value->storeAs('public/post/' . date('Y/m/d'), $imageName);
+                    $path = $value->storeAs('public/posts/' . date('Y/m/d'), $imageName);
                     $post_meta->value = asset(Storage::url($path));
                 } else {
                     $post_meta->value = $value;

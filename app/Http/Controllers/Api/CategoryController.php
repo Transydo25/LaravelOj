@@ -52,7 +52,7 @@ class CategoryController extends BaseController
 
         if ($image) {
             $imageName = Str::random(10);
-            $imagePath = $image->storeAs('public/upload/' . date('Y/m/d'), $imageName);
+            $imagePath = $image->storeAs('public/categories/' . date('Y/m/d'), $imageName);
             $imageUrl = asset(Storage::url($imagePath));
             $category->url = $imageUrl;
         }
@@ -89,7 +89,7 @@ class CategoryController extends BaseController
                 Storage::delete($path);
             }
             $imageName = Str::random(10);
-            $imagePath = $image->storeAs('public/upload/' . date('Y/m/d'), $imageName);
+            $imagePath = $image->storeAs('public/categories/' . date('Y/m/d'), $imageName);
             $imageUrl = asset(Storage::url($imagePath));
             $category->url = $imageUrl;
         }

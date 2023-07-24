@@ -21,7 +21,7 @@ class CategoryRequest extends FormRequest
             'name' => 'required|string|max:255',
             'description' => 'string',
             'type' => 'string',
-            'status' => 'in:active,inactive',
+            'status' => 'in:active,deactive',
             'image' => 'image|mimes:jpg,png,svg|max:10240',
         ];
     }
