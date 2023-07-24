@@ -31,7 +31,7 @@ class PostFactory extends Factory
     public function configure()
     {
         return $this->afterCreating(function (Post $post) {
-            $categoryIds = Category::inRandomOrder()->pluck('id')->random(1, 3)->toArray();
+            $categoryIds = Category::inRandomOrder()->pluck('id')->first();
             $post->categories()->sync($categoryIds);
         });
     }
