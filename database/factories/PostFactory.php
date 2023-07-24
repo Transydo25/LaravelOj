@@ -8,6 +8,7 @@ use App\Models\Post;
 use App\Models\Category;
 use App\Models\User;
 use App\Models\PostDetail;
+use App\Models\PostMeta;
 
 class PostFactory extends Factory
 {
@@ -25,7 +26,9 @@ class PostFactory extends Factory
             'status' => $this->faker->randomElement(['draft', 'published', 'archived']),
             'type' => $this->faker->word,
             'slug' => Str::slug($title),
-            'author' => User::inRandomOrder()->pluck('id')->first(),
+            'author' => User::whereHas('roles', function ($query) {
+                $query->whereIn('role_id', [1, 3]);
+            })->inRandomOrder()->pluck('id')->first(),
         ];
     }
 
@@ -43,6 +46,11 @@ class PostFactory extends Factory
                 $post_detail->lang = $language;
                 $post_detail->save();
             }
+            $post_meta = new PostMeta;
+            $post_meta->post_id = $post->id;
+            $post_meta->key = $this->faker->word;
+            $post_meta->value = $this->faker->sentence;
+            $post_meta->save();
         });
     }
 }
