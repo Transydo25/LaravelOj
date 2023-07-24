@@ -1,13 +1,10 @@
 <?php
 
-namespace App\Helpers;
-
 use Stichoza\GoogleTranslate\GoogleTranslate;
 
-class Translate
+function Translate($text, $targetLanguage)
 {
-    public static function translate($text, $targetLanguage)
-    {
-        return GoogleTranslate::setSource('en')->setTarget($targetLanguage)->translate($text);
-    }
+    $tr = new GoogleTranslate;
+
+    return $tr->setSource('en')->setTarget($targetLanguage)->translate($text);
 }

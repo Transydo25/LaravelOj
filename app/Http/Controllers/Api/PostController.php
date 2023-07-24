@@ -10,8 +10,6 @@ use App\Models\PostDetail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
-use App\Helpers\Translate;
-
 
 class PostController extends BaseController
 {
@@ -84,8 +82,8 @@ class PostController extends BaseController
         $post->categories()->sync($categoryIds);
         foreach ($languages as $language) {
             $post_detail = new PostDetail;
-            $post_detail->title = Translate::translate($request->title, $language);
-            $post_detail->content = Translate::translate($request->content, $language);
+            $post_detail->title = translate($request->title, $language);
+            $post_detail->content = translate($request->content, $language);
             $post_detail->post_id = $post->id;
             $post_detail->lang = $language;
             $post_detail->save();
@@ -115,8 +113,7 @@ class PostController extends BaseController
     public function show(Request $request, Post $post)
     {
         $language = $request->language;
-        $languages = config('app.languages');
-        if ($language && in_array($language, $languages)) {
+        if ($language) {
             $post->post_detail = $post->postDetail()->where('lang', $language)->get();
         }
         $post->categories = $post->categories()->where('status', 'active')->pluck('name');
