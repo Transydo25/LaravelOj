@@ -103,6 +103,7 @@ Route::group([
     Route::post('/', [PostController::class, 'store'])->can('create', Post::class);
     Route::get('/{post}', [PostController::class, 'show']);
     Route::post('/{post}', [PostController::class, 'update'])->can('update', 'post');
+    Route::post('/detail/{post}', [PostController::class, 'updateDetails'])->can('update', 'post');
     Route::put('/', [PostController::class, 'deletePost'])->can('delete', Post::class);
     Route::put('/restore', [PostController::class, 'restore'])->can('restore', Post::class);
 });

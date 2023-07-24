@@ -10,13 +10,16 @@ use App\Models\PostDetail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
-use Stichoza\GoogleTranslate\GoogleTranslate;
+use App\Helpers\Translate;
 
 
 class PostController extends BaseController
 {
     public function index(Request $request)
     {
+        $language = $request->input('language');
+        $languages = config('app.languages');
+        $language = in_array($language, $languages) ? $language : '';
         $status = $request->input('status');
         $layout_status = ['draft', 'published', 'archived'];
         $sort = $request->input('sort');
@@ -35,6 +38,14 @@ class PostController extends BaseController
         }
         if ($search) {
             $query = $query->where('title', 'LIKE', '%' . $search . '%');
+        }
+        if ($language) {
+            $query = $query->whereHas('postDetail', function ($q) use ($language) {
+                $q->where('lang', $language);
+            });
+            $query = $query->with(['postDetail' => function ($q) use ($language) {
+                $q->where('lang', $language);
+            }]);
         }
         $posts = $query->orderBy($sort_by, $sort)->paginate($limit);
 
@@ -61,8 +72,7 @@ class PostController extends BaseController
         $slug = Str::slug($request->title);
         $categoryIds = $request->categories;
         $user_id = Auth::id();
-        $languages = ['ko', 'zh-CN', 'zh-TW', 'th', 'ja', 'vi'];
-        $translate = new GoogleTranslate();
+        $languages = config('app.languages');
 
         $post->title = $request->title;
         $post->content = $request->content;
@@ -74,8 +84,8 @@ class PostController extends BaseController
         $post->categories()->sync($categoryIds);
         foreach ($languages as $language) {
             $post_detail = new PostDetail;
-            $post_detail->title = $translate->setSource('en')->setTarget($language)->translate($post->title);
-            $post_detail->content = $translate->setSource('en')->setTarget($language)->translate($post->content);
+            $post_detail->title = Translate::translate($request->title, $language);
+            $post_detail->content = Translate::translate($request->content, $language);
             $post_detail->post_id = $post->id;
             $post_detail->lang = $language;
             $post_detail->save();
@@ -104,12 +114,9 @@ class PostController extends BaseController
 
     public function show(Request $request, Post $post)
     {
-        $request->validate([
-            'lang' => 'in:ko,zh-CN,zh-TW,th,ja,vi,en',
-        ]);
-
         $language = $request->language;
-        if ($language) {
+        $languages = config('app.languages');
+        if ($language && in_array($language, $languages)) {
             $post->post_detail = $post->postDetail()->where('lang', $language)->get();
         }
         $post->categories = $post->categories()->where('status', 'active')->pluck('name');
@@ -118,6 +125,29 @@ class PostController extends BaseController
         return $this->handleResponse($post, 'Post data details');
     }
 
+
+    public function updateDetails(Request $request, Post $post)
+    {
+        if (!Auth::user()->hasPermission('update')) {
+            return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
+        }
+
+        $request->validate([
+            'title' => 'required|string|max: 255',
+            'content' => 'string',
+        ]);
+
+        $language = $request->language;
+
+        if (!($language && in_array($language, config('app.languages')))) {
+            return $this->handleResponse([], 'Not Found Language');
+        }
+        $post_detail = $post->postDetail()->where('lang', $language)->first();
+        $post_detail->title = $request->title;
+        $post_detail->content = $request->content;
+        $post_detail->save();
+        return $this->handleResponse($post_detail, 'Post detail updated successfully');
+    }
 
     public function update(Request $request, Post $post)
     {
@@ -139,7 +169,6 @@ class PostController extends BaseController
         $slug = Str::slug($request->title);
         $categoryIds = $request->categories;
         $languages = ['ko', 'zh-CN', 'zh-TW', 'th', 'ja', 'vi'];
-        $translate = new GoogleTranslate();
 
         $post->title = $request->title;
         $post->content = $request->content;
@@ -153,8 +182,8 @@ class PostController extends BaseController
         $post->postDetail()->delete();
         foreach ($languages as $language) {
             $post_detail = new PostDetail;
-            $post_detail->title = $translate->setSource('en')->setTarget($language)->translate($post->title);
-            $post_detail->content = $translate->setSource('en')->setTarget($language)->translate($post->content);
+            $post_detail->title = Translate::translate($request->title, $language);
+            $post_detail->content = Translate::translate($request->content, $language);
             $post_detail->post_id = $post->id;
             $post_detail->lang = $language;
             $post_detail->save();
@@ -189,6 +218,7 @@ class PostController extends BaseController
 
         return $this->handleResponse($post, 'Post updated successfully');
     }
+
 
     public function restore(Request $request)
     {
