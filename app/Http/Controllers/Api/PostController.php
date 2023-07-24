@@ -168,7 +168,7 @@ class PostController extends BaseController
         $value = $request->meta_value;
         $slug = Str::slug($request->title);
         $categoryIds = $request->categories;
-        $languages = ['ko', 'zh-CN', 'zh-TW', 'th', 'ja', 'vi'];
+        $languages = config('app.languages');
 
         $post->title = $request->title;
         $post->content = $request->content;
