@@ -16,7 +16,9 @@ return [
     'name' => env('APP_NAME', 'Laravel'),
     'paginate' => '10',
     'languages' => ['ko', 'zh-CN', 'zh-TW', 'th', 'ja', 'vi'],
-
+    'resize_patterns' => [
+        '720x2000', '1280x2000', '480x2000', '330x2000', '200x2000', '100x2000', '300x300',
+    ],
     /*
     |--------------------------------------------------------------------------
     | Application Environment
@@ -178,6 +180,7 @@ return [
         App\Providers\RouteServiceProvider::class,
         //Meeeeeeeeeeeeeee
         Tymon\JWTAuth\Providers\LaravelServiceProvider::class,
+        Intervention\Image\ImageServiceProvider::class,
 
     ],
 
@@ -233,6 +236,8 @@ return [
         //Meeeeeeeeeeeeeeeeeeeeee
         'JWTAuth' => Tymon\JWTAuth\Facades\JWTAuth::class,
         'JWTFactory' => Tymon\JWTAuth\Facades\JWTFactory::class,
+        'Image' => Intervention\Image\Facades\Image::class,
+
     ],
 
 ];
