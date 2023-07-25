@@ -13,7 +13,16 @@ function upload($file, $folder)
     $size = null;
     $minDistance = PHP_INT_MAX;
     $image_name = Str::random(10);
+    if ($folder == 'users') {
+        $path = "public/{$folder}/" . date('Y/m/d');
+        if (!Storage::exists($path)) {
+            Storage::makeDirectory($path, 0777, true, true);
+        }
+        $image_path = $path . '/' . $image_name;
+        Image::make($uploaded_image)->resize(300, 300)->save(storage_path('app/' . $path . '/' . $image_name));
 
+        return asset(Storage::url($image_path));
+    }
 
     foreach ($resize_pattern as $pattern) {
         list($width, $height) = explode('x', $pattern);

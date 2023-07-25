@@ -51,10 +51,8 @@ class CategoryController extends BaseController
         $image = $request->image;
 
         if ($image) {
-            $imageName = Str::random(10);
-            $imagePath = $image->storeAs('public/categories/' . date('Y/m/d'), $imageName);
-            $imageUrl = asset(Storage::url($imagePath));
-            $category->url = $imageUrl;
+            $imagePath = upload($image, 'categories');
+            $category->url = $imagePath;
         }
         $category->name = $request->name;
         $category->description = $request->description;
@@ -88,10 +86,8 @@ class CategoryController extends BaseController
                 $path = 'public' . Str::after($category->url, 'storage');
                 Storage::delete($path);
             }
-            $imageName = Str::random(10);
-            $imagePath = $image->storeAs('public/categories/' . date('Y/m/d'), $imageName);
-            $imageUrl = asset(Storage::url($imagePath));
-            $category->url = $imageUrl;
+            $imagePath = upload($image, 'categories');
+            $category->url = $imagePath;
         }
         $category->name = $request->name;
         $category->description = $request->description;

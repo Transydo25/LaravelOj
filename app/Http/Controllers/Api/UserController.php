@@ -73,9 +73,8 @@ class UserController extends BaseController
             $user_meta->user_id = $user->id;
             $user_meta->key = $key;
             if (is_file($value)) {
-                $image_name = Str::random(10);
-                $path = $value->storeAs('public/user/' . date('Y/m/d'), $image_name);
-                $user_meta->value = asset(Storage::url($path));
+                $imagePath = upload($value, 'users');
+                $user_meta->value = $imagePath;
             } else {
                 $user_meta->value = $value;
             }
@@ -132,9 +131,8 @@ class UserController extends BaseController
             $user_meta->user_id = $user->id;
             $user_meta->key = $key;
             if (is_file($value)) {
-                $image_name = Str::random(10);
-                $path = $value->storeAs('public/user/' . date('Y/m/d'), $image_name);
-                $user_meta->value = asset(Storage::url($path));
+                $imagePath = upload($value, 'users');
+                $user_meta->value = $imagePath;
             } else {
                 $user_meta->value = $value;
             }
