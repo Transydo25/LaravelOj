@@ -17,7 +17,7 @@ class CreateUploadsTable extends Migration
             $table->id();
             $table->string('url');
             $table->unsignedBigInteger('type_id');
-            $table->string('type');
+            $table->string('type_type');
             $table->timestamps();
         });
     }

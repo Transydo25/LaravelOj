@@ -78,7 +78,7 @@ Route::group([
     Route::get('/', [UploadController::class, 'index']);
     Route::post('/', [UploadController::class, 'store']);
     Route::get('/{media}', [UploadController::class, 'show']);
-    Route::post('/{media}', [UploadController::class, 'update']);
+    Route::post('/update', [UploadController::class, 'update']);
     Route::delete('/{media}', [UploadController::class, 'destroy']);
 });
 

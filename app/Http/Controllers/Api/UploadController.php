@@ -36,7 +36,7 @@ class UploadController extends BaseController
         return $uploadedImage->resize($width, $height);
     }
 
-    private function store(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
             'images' => 'array',
@@ -44,14 +44,15 @@ class UploadController extends BaseController
         ]);
 
         $images = $request->images;
-        $image_name = Str::random(10);
-        $path = "public/upload/" . date('Y/m/d');
+        $folder = $request->folder;
+        $path = 'public/' . $folder . '/' . date('Y/m/d');
         $upload_data = [];
 
         if (!Storage::exists($path)) {
             Storage::makeDirectory($path, 0777, true, true);
         }
         foreach ($images as $image) {
+            $image_name = Str::random(10);
             $resizedImage = $this->resize($image);
             $image_path = $path . '/' . $image_name;
             $resizedImage->save(storage_path('app/' . $path . '/' . $image_name));
@@ -63,5 +64,39 @@ class UploadController extends BaseController
         }
 
         return $this->handleResponse($upload_data, 'Upload created successfully');
+    }
+
+    public function update(Request $request)
+    {
+        $images = $request->images;
+        $type_type = $request->type_type;
+        $type_id = $request->type_id;
+        $uploads = Upload::where('type_type', $type_type)
+            ->where('type_id', $type_id)
+            ->get();
+        $folder = $request->folder;
+        $path = 'public/' . $folder . '/' . date('Y/m/d');
+        $upload_data = [];
+        if ($uploads) {
+            foreach ($uploads as $upload) {
+                Storage::delete($upload->path);
+                $upload->delete();
+            }
+        }
+
+        foreach ($images as $image) {
+            $image_name = Str::random(10);
+            $resizedImage = $this->resize($image);
+            $image_path = $path . '/' . $image_name;
+            $resizedImage->save(storage_path('app/' . $path . '/' . $image_name));
+            $upload = new Upload;
+            $upload->url = asset(Storage::url($image_path));
+            $upload->path = $image_path;
+            $upload->type_type = $type_type;
+            $upload->type_id = $type_id;
+            $upload->save();
+            $upload_data[] = $upload;
+        }
+        return $this->handleResponse($uploads, 'Uploads updated successfully');
     }
 }

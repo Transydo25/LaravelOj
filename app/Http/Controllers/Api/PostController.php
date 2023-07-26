@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Post;
 use App\Models\PostMeta;
 use App\Models\PostDetail;
+use App\Models\Upload;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
@@ -79,6 +80,16 @@ class PostController extends BaseController
         $post->slug = $slug;
         $post->author = $user_id;
         $post->save();
+        if ($request->upload_ids) {
+            foreach ($request->upload_ids as $upload_id) {
+                $upload = Upload::find($upload_id);
+                if ($upload) {
+                    $upload->type_id = $post->id;
+                    $upload->type_type = get_class($post);
+                    $upload->save();
+                }
+            }
+        }
         $post->categories()->sync($categoryIds);
         foreach ($languages as $language) {
             $post_detail = new PostDetail;
@@ -112,6 +123,7 @@ class PostController extends BaseController
         }
         $post->categories = $post->categories()->where('status', 'active')->pluck('name');
         $post->post_meta = $post->postMeta()->get();
+        $post->upload = $post->uploads()->get();
         return $this->handleResponse($post, 'Post data details');
     }
 
