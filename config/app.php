@@ -16,9 +16,6 @@ return [
     'name' => env('APP_NAME', 'Laravel'),
     'paginate' => '10',
     'languages' => ['ko', 'zh-CN', 'zh-TW', 'th', 'ja', 'vi'],
-    'resize_patterns' => [
-        '720x2000', '1280x2000', '480x2000', '330x2000', '200x2000', '100x2000', '300x300',
-    ],
     /*
     |--------------------------------------------------------------------------
     | Application Environment

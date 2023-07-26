@@ -4,12 +4,14 @@ use Intervention\Image\Facades\Image;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
-function upload($file, $folder)
+function uploadImage($file, $folder)
 {
     $uploaded_image = Image::make($file);
     $input_width = $uploaded_image->getWidth();
     $input_height = $uploaded_image->getHeight();
-    $resize_pattern = config('app.resize_patterns');
+    $resize_pattern = [
+        '720x2000', '1280x2000', '480x2000', '330x2000', '200x2000', '100x2000', '300x300',
+    ];
     $size = null;
     $minDistance = PHP_INT_MAX;
     $image_name = Str::random(10);

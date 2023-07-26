@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\VerifyEmailController;
 use App\Models\User;
 use App\Models\Post;
@@ -71,14 +72,14 @@ Route::post('/email/verify/resend', function (Request $request) {
 
 //Media
 Route::group([
-    'middleware' => 'auth:api',
-    'prefix' => 'media'
+    'middleware' => ['jwt.verify', 'auth:api'],
+    'prefix' => 'upload'
 ], function () {
-    Route::get('/', [MediaController::class, 'index']);
-    Route::post('/', [MediaController::class, 'store']);
-    Route::get('/{media}', [MediaController::class, 'show']);
-    Route::post('/{media}', [MediaController::class, 'update']);
-    Route::delete('/{media}', [MediaController::class, 'destroy']);
+    Route::get('/', [UploadController::class, 'index']);
+    Route::post('/', [UploadController::class, 'store']);
+    Route::get('/{media}', [UploadController::class, 'show']);
+    Route::post('/{media}', [UploadController::class, 'update']);
+    Route::delete('/{media}', [UploadController::class, 'destroy']);
 });
 
 //Category

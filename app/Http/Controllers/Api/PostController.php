@@ -98,12 +98,7 @@ class PostController extends BaseController
             $value = $meta_values[$index];
             $post_meta->post_id = $post->id;
             $post_meta->key = $metaKey;
-            if (is_file($value)) {
-                $imagePath = upload($value, 'posts');
-                $post_meta->value = $imagePath;
-            } else {
-                $post_meta->value = $value;
-            }
+            $post_meta->value = $value;
             $post_meta->save();
         }
         return $this->handleResponse($post, 'Post created successfully');
@@ -117,7 +112,6 @@ class PostController extends BaseController
         }
         $post->categories = $post->categories()->where('status', 'active')->pluck('name');
         $post->post_meta = $post->postMeta()->get();
-
         return $this->handleResponse($post, 'Post data details');
     }
 
@@ -178,8 +172,8 @@ class PostController extends BaseController
         $post->postDetail()->delete();
         foreach ($languages as $language) {
             $post_detail = new PostDetail;
-            $post_detail->title = Translate::translate($request->title, $language);
-            $post_detail->content = Translate::translate($request->content, $language);
+            $post_detail->title = translate($request->title, $language);
+            $post_detail->content = translate($request->content, $language);
             $post_detail->post_id = $post->id;
             $post_detail->lang = $language;
             $post_detail->save();
@@ -187,11 +181,6 @@ class PostController extends BaseController
         if ($request->has('meta_keys') && $request->has('meta_values')) {
             $post_metas = $post->postMeta()->get();
             foreach ($post_metas as $post_meta) {
-                $value = $post_meta->value;
-                if (filter_var($value, FILTER_VALIDATE_URL) !== false) {
-                    $path = 'public' . Str::after($post_meta->value, 'storage');
-                    Storage::delete($path);
-                }
                 $post_meta->delete();
             }
             $metaKeys = $request->meta_keys;
@@ -201,12 +190,7 @@ class PostController extends BaseController
                 $value = $metaValues[$index];
                 $post_meta->post_id = $post->id;
                 $post_meta->key = $metaKey;
-                if (is_file($value)) {
-                    $imagePath = upload($value, 'posts');
-                    $post_meta->value = $imagePath;
-                } else {
-                    $post_meta->value = $value;
-                }
+                $post_meta->value = $value;
                 $post_meta->save();
             }
         }

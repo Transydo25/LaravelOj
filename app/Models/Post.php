@@ -25,4 +25,9 @@ class Post extends Model
     {
         return $this->hasMany(PostDetail::class);
     }
+
+    public function uploads()
+    {
+        return $this->morphMany(Upload::class, 'type');
+    }
 }
