@@ -30,6 +30,10 @@ class ArticlePolicy
         return $user->hasRole('editor') || $user->id === $article->user_id;
     }
 
+    public function status(User $user, Article $article)
+    {
+        //
+    }
 
     public function delete(User $user, Article $article)
     {

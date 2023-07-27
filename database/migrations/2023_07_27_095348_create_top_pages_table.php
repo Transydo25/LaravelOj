@@ -15,6 +15,8 @@ class CreateTopPagesTable extends Migration
     {
         Schema::create('top_pages', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('user_id');
+
             $table->timestamps();
         });
     }
