@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Upload;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ArticleStatus;
 
 
 class ArticleController extends BaseController
@@ -70,13 +72,13 @@ class ArticleController extends BaseController
         $categoryIds = $request->categories;
         $user_id = Auth::id();
         $languages = config('app.languages');
-        $seoTitle = $request->title . ' - Duy';
-        $seoDescription = Str::limit($request->description, 160);
+        $seo_title = $request->title . ' - Duy';
+        $seo_description = Str::limit($request->description, 160);
 
         $article->title = $request->title;
-        $article->seo_title = $seoTitle;
+        $article->seo_title = $seo_title;
         $article->description = $request->description;
-        $article->seo_description = $seoDescription;
+        $article->seo_description = $seo_description;
         $article->content = $request->content;
         $article->status = 'pending';
         $article->type = $request->type;
@@ -99,6 +101,32 @@ class ArticleController extends BaseController
         return $this->handleResponse($article, 'article created successfully');
     }
 
+    public function status(Request $request, Article $article)
+    {
+        if (!Auth::user()->hasPermission('update')) {
+            return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
+        }
+
+        $request->validate([
+            'status' => 'required|string|in:published,reject',
+            'reason' => 'string',
+        ]);
+
+        if ($request->status === 'published') {
+            $article->status = 'published';
+            $article->save();
+            Mail::to($article->author_email)->send(new ArticleStatus($article, 'published'));
+        }
+        if ($request->status === 'reject') {
+            Mail::to($article->author_email)->send(new ArticleStatus($article, 'reject', $request->reason));
+
+            $article->status = 'pending';
+            $article->save();
+        }
+
+        return $this->handleResponse($article, 'article status updated successfully');
+    }
+
     public function show(Request $request, article $article)
     {
         $language = $request->language;
@@ -115,12 +143,14 @@ class ArticleController extends BaseController
         if (!Auth::user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
+        if ($article->status == 'published') {
+            return $this->handleResponse([], 'Can not update published article');
+        }
 
         $request->validate([
             'title' => 'required|string|max: 255',
             'content' => 'string',
             'description' => 'string',
-            'status' => 'in:draft,published,archived,pending',
             'type' => 'string',
             'categories' => 'required|array',
         ]);
@@ -131,12 +161,6 @@ class ArticleController extends BaseController
 
         $article->title = $request->title;
         $article->content = $request->content;
-        if (in_array($request->status, ['pending', 'draft', 'archived'])) {
-            $article->status = $request->status;
-        }
-        if ($request->status == 'published' && Auth::user()->hasRole('admin')) {
-            $article->status = $request->status;
-        }
         $article->type = $request->type;
         $article->slug = $slug;
         if ($request->upload_ids) {
@@ -223,6 +247,11 @@ class ArticleController extends BaseController
 
         foreach ($articles as $article) {
             if ($type === 'force_delete') {
+                $uploads = $article->upload()->get();
+                foreach ($uploads as $upload) {
+                    Storage::delete($upload->path);
+                    $upload->delete();
+                }
                 $article->forceDelete();
             } else {
                 $article->status = 'archived';
