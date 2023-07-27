@@ -84,8 +84,7 @@ class PostController extends BaseController
             foreach ($request->upload_ids as $upload_id) {
                 $upload = Upload::find($upload_id);
                 if ($upload) {
-                    $upload->type_id = $post->id;
-                    $upload->type_type = get_class($post);
+                    $upload->post_id = $post->id;
                     $upload->save();
                 }
             }
@@ -179,6 +178,20 @@ class PostController extends BaseController
         }
         $post->type = $request->type;
         $post->slug = $slug;
+        if ($request->upload_ids) {
+            $uploads = $post->upload()->get();
+            foreach ($uploads as $upload) {
+                Storage::delete($upload->path);
+                $upload->delete();
+            }
+            foreach ($request->upload_ids as $upload_id) {
+                $upload = Upload::find($upload_id);
+                if ($upload) {
+                    $upload->post_id = $post->id;
+                    $upload->save();
+                }
+            }
+        }
         $post->categories()->sync($categoryIds);
         $post->save();
         $post->postDetail()->delete();
@@ -252,13 +265,10 @@ class PostController extends BaseController
 
         foreach ($posts as $post) {
             if ($type === 'force_delete') {
-                $post_metas = $post->postMeta()->get();
-                foreach ($post_metas as $post_meta) {
-                    $value = $post_meta->value;
-                    if (filter_var($value, FILTER_VALIDATE_URL) !== false) {
-                        $path = 'public' . Str::after($post_meta->value, 'storage');
-                        Storage::delete($path);
-                    }
+                $uploads = $post->upload()->get();
+                foreach ($uploads as $upload) {
+                    Storage::delete($upload->path);
+                    $upload->delete();
                 }
                 $post->forceDelete();
             } else {

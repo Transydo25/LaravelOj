@@ -33,7 +33,12 @@ class UploadController extends BaseController
         }
 
         list($width, $height) = explode('x', $size);
-        return $uploadedImage->resize($width, $height);
+        $resizedImage = $uploadedImage->resize($width, $height);
+
+        return [
+            'width' => $resizedImage->getWidth(),
+            'image' => $resizedImage
+        ];
     }
 
     public function store(Request $request)
@@ -53,50 +58,19 @@ class UploadController extends BaseController
         }
         foreach ($images as $image) {
             $image_name = Str::random(10);
-            $resizedImage = $this->resize($image);
+            $new_image = $this->resize($image);
+            $resizedImage = $new_image['image'];
+            $width = $new_image['width'];
             $image_path = $path . '/' . $image_name;
             $resizedImage->save(storage_path('app/' . $path . '/' . $image_name));
             $upload = new Upload;
             $upload->url = asset(Storage::url($image_path));
             $upload->path = $image_path;
+            $upload->width = $width;
             $upload->save();
             $upload_data[] = $upload;
         }
 
         return $this->handleResponse($upload_data, 'Upload created successfully');
-    }
-
-    public function update(Request $request)
-    {
-        $images = $request->images;
-        $type_type = $request->type_type;
-        $type_id = $request->type_id;
-        $uploads = Upload::where('type_type', $type_type)
-            ->where('type_id', $type_id)
-            ->get();
-        $folder = $request->folder;
-        $path = 'public/' . $folder . '/' . date('Y/m/d');
-        $upload_data = [];
-        if ($uploads) {
-            foreach ($uploads as $upload) {
-                Storage::delete($upload->path);
-                $upload->delete();
-            }
-        }
-
-        foreach ($images as $image) {
-            $image_name = Str::random(10);
-            $resizedImage = $this->resize($image);
-            $image_path = $path . '/' . $image_name;
-            $resizedImage->save(storage_path('app/' . $path . '/' . $image_name));
-            $upload = new Upload;
-            $upload->url = asset(Storage::url($image_path));
-            $upload->path = $image_path;
-            $upload->type_type = $type_type;
-            $upload->type_id = $type_id;
-            $upload->save();
-            $upload_data[] = $upload;
-        }
-        return $this->handleResponse($uploads, 'Uploads updated successfully');
     }
 }

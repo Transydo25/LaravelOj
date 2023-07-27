@@ -26,7 +26,7 @@ class PostPolicy
 
     public function update(User $user, Post $post)
     {
-        return $user->hasRole('editor');
+        return $user->hasRole('editor') || $user->id === $post->author;
     }
 
     public function delete(User $user)

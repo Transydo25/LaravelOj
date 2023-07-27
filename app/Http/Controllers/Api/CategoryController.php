@@ -9,6 +9,8 @@ use App\Models\Category;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Upload;
+
 
 
 class CategoryController extends BaseController
@@ -48,26 +50,30 @@ class CategoryController extends BaseController
 
         $slug = Str::slug($request->name);
         $user_id = Auth::id();
-        $image = $request->image;
-
-        if ($image) {
-            $imagePath = upload($image, 'categories');
-            $category->url = $imagePath;
-        }
         $category->name = $request->name;
         $category->description = $request->description;
         $category->slug = $slug;
         $category->type = $request->type;
         $category->status = $request->status;
         $category->author = $user_id;
-
         $category->save();
+        if ($request->upload_ids) {
+            foreach ($request->upload_ids as $upload_id) {
+                $upload = Upload::find($upload_id);
+                if ($upload) {
+                    $upload->category_id = $category->id;
+                    $upload->save();
+                }
+            }
+        }
+
         return $this->handleResponse($category, 'Category created successfully');
     }
 
     public function show(Category $category)
     {
         $category->posts = $category->posts()->where('status', 'published')->pluck('title');
+        $category->upload = $category->uploads()->get();
         return $this->handleResponse($category, 'Category data');
     }
 
@@ -79,23 +85,27 @@ class CategoryController extends BaseController
         }
 
         $slug = Str::slug($request->name);
-        $image = $request->image;
-
-        if ($image) {
-            if ($category->url) {
-                $path = 'public' . Str::after($category->url, 'storage');
-                Storage::delete($path);
-            }
-            $imagePath = upload($image, 'categories');
-            $category->url = $imagePath;
-        }
         $category->name = $request->name;
         $category->description = $request->description;
         $category->slug = $slug;
         $category->type = $request->type;
         $category->status = $request->status;
-
+        if ($request->upload_ids) {
+            $uploads = $category->upload()->get();
+            foreach ($uploads as $upload) {
+                Storage::delete($upload->path);
+                $upload->delete();
+            }
+            foreach ($request->upload_ids as $upload_id) {
+                $upload = Upload::find($upload_id);
+                if ($upload) {
+                    $upload->category_id = $category->id;
+                    $upload->save();
+                }
+            }
+        }
         $category->save();
+
         return $this->handleResponse($category, 'Category update successfully!');
     }
 
@@ -139,15 +149,16 @@ class CategoryController extends BaseController
         $categories = Category::withTrashed()->whereIn('id', $ids)->get();
 
         foreach ($categories as $category) {
-            $category->status = 'deactive';
-            $category->save();
             if ($type === 'force_delete') {
-                if ($category->url) {
-                    $path = 'public' . Str::after($category->url, 'storage');
-                    Storage::delete($path);
+                $uploads = $category->upload()->get();
+                foreach ($uploads as $upload) {
+                    Storage::delete($upload->path);
+                    $upload->delete();
                 }
                 $category->forceDelete();
             } else {
+                $category->status = 'deactive';
+                $category->save();
                 $category->delete();
             }
         }

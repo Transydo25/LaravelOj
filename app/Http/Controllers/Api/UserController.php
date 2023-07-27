@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\UserMeta;
 use App\Models\Post;
+use App\Models\Upload;
 use App\Traits\HasPermission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -62,6 +63,15 @@ class UserController extends BaseController
         $user->password = bcrypt($request->password);
         $user->save();
         $user->roles()->sync($roleIds);
+        if ($request->upload_ids) {
+            foreach ($request->upload_ids as $upload_id) {
+                $upload = Upload::find($upload_id);
+                if ($upload) {
+                    $upload->user_id = $user->id;
+                    $upload->save();
+                }
+            }
+        }
         if (!($request->has('meta_keys') && $request->has('meta_values'))) {
             return $this->handleResponse($user, 'User successfully created')->setStatusCode(201);
         }
@@ -72,12 +82,7 @@ class UserController extends BaseController
             $value = $meta_values[$index];
             $user_meta->user_id = $user->id;
             $user_meta->key = $key;
-            if (is_file($value)) {
-                $imagePath = upload($value, 'users');
-                $user_meta->value = $imagePath;
-            } else {
-                $user_meta->value = $value;
-            }
+            $user_meta->value = $value;
             $user_meta->save();
         }
         return $this->handleResponse($user, 'User successfully created')->setStatusCode(201);
@@ -88,6 +93,8 @@ class UserController extends BaseController
         if (!Auth::user()->hasPermission('read')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
+        $user->upload = $user->uploads()->get();
+
         return $this->handleResponse($user, 'User data details');
     }
 
@@ -110,6 +117,20 @@ class UserController extends BaseController
         $roleIds = $request->roles;
         $user->roles()->sync($roleIds);
         $user->password = bcrypt($request->new_password);
+        if ($request->upload_ids) {
+            $uploads = $user->upload()->get();
+            foreach ($uploads as $upload) {
+                Storage::delete($upload->path);
+                $upload->delete();
+            }
+            foreach ($request->upload_ids as $upload_id) {
+                $upload = Upload::find($upload_id);
+                if ($upload) {
+                    $upload->user_id = $user->id;
+                    $upload->save();
+                }
+            }
+        }
         $user->save();
         if (!($request->has('meta_keys') && $request->has('meta_values'))) {
             return $this->handleResponse($user, 'User successfully created')->setStatusCode(201);
@@ -117,10 +138,6 @@ class UserController extends BaseController
         $user_metas = $user->userMeta()->get();
         foreach ($user_metas as $user_meta) {
             $value = $user_meta->value;
-            if (filter_var($value, FILTER_VALIDATE_URL) !== false) {
-                $path = 'public' . Str::after($user_meta->value, 'storage');
-                Storage::delete($path);
-            }
             $user_meta->delete();
         }
         $meta_keys = $request->meta_keys;
@@ -130,12 +147,7 @@ class UserController extends BaseController
             $value = $meta_values[$index];
             $user_meta->user_id = $user->id;
             $user_meta->key = $key;
-            if (is_file($value)) {
-                $imagePath = upload($value, 'users');
-                $user_meta->value = $imagePath;
-            } else {
-                $user_meta->value = $value;
-            }
+            $user_meta->value = $value;
             $user_meta->save();
         }
         return $this->handleResponse($user, 'User successfully updated')->setStatusCode(201);
@@ -177,13 +189,10 @@ class UserController extends BaseController
 
         foreach ($users as $user) {
             if ($type === 'force_delete') {
-                $user_metas = $user->userMeta()->get();
-                foreach ($user_metas as $user_meta) {
-                    $value = $user_meta->value;
-                    if (filter_var($value, FILTER_VALIDATE_URL) !== false) {
-                        $path = 'public' . Str::after($user_meta->value, 'storage');
-                        Storage::delete($path);
-                    }
+                $uploads = $user->upload()->get();
+                foreach ($uploads as $upload) {
+                    Storage::delete($upload->path);
+                    $upload->delete();
                 }
                 $user->forceDelete();
             } else {
