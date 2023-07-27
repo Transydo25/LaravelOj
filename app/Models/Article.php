@@ -26,4 +26,9 @@ class Article extends Model
     {
         return $this->hasMany(Upload::class);
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

@@ -112,13 +112,15 @@ class ArticleController extends BaseController
             'reason' => 'string',
         ]);
 
+        $author_email =  $article->user->email;
+
         if ($request->status === 'published') {
             $article->status = 'published';
             $article->save();
-            Mail::to($article->author_email)->send(new ArticleStatus($article, 'published'));
+            Mail::to($author_email)->send(new ArticleStatus($article, 'published'));
         }
         if ($request->status === 'reject') {
-            Mail::to($article->author_email)->send(new ArticleStatus($article, 'reject', $request->reason));
+            Mail::to($author_email)->send(new ArticleStatus($article, 'reject', $request->reason));
 
             $article->status = 'pending';
             $article->save();
