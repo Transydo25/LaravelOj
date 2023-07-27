@@ -81,13 +81,7 @@ class PostController extends BaseController
         $post->author = $user_id;
         $post->save();
         if ($request->upload_ids) {
-            foreach ($request->upload_ids as $upload_id) {
-                $upload = Upload::find($upload_id);
-                if ($upload) {
-                    $upload->post_id = $post->id;
-                    $upload->save();
-                }
-            }
+            handleUploads($request->upload_ids, $post->id, 'post_id');
         }
         $post->categories()->sync($categoryIds);
         foreach ($languages as $language) {
@@ -122,7 +116,7 @@ class PostController extends BaseController
         }
         $post->categories = $post->categories()->where('status', 'active')->pluck('name');
         $post->post_meta = $post->postMeta()->get();
-        $post->upload = $post->uploads()->get();
+        $post->upload = $post->upload()->get();
         return $this->handleResponse($post, 'Post data details');
     }
 
@@ -179,18 +173,7 @@ class PostController extends BaseController
         $post->type = $request->type;
         $post->slug = $slug;
         if ($request->upload_ids) {
-            $uploads = $post->upload()->get();
-            foreach ($uploads as $upload) {
-                Storage::delete($upload->path);
-                $upload->delete();
-            }
-            foreach ($request->upload_ids as $upload_id) {
-                $upload = Upload::find($upload_id);
-                if ($upload) {
-                    $upload->post_id = $post->id;
-                    $upload->save();
-                }
-            }
+            handleUploads($request->upload_ids, $post->id, 'post_id');
         }
         $post->categories()->sync($categoryIds);
         $post->save();

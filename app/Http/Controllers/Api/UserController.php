@@ -57,20 +57,13 @@ class UserController extends BaseController
 
         $user = new User;
         $roleIds = $request->roles;
-
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
         $user->save();
         $user->roles()->sync($roleIds);
         if ($request->upload_ids) {
-            foreach ($request->upload_ids as $upload_id) {
-                $upload = Upload::find($upload_id);
-                if ($upload) {
-                    $upload->user_id = $user->id;
-                    $upload->save();
-                }
-            }
+            handleUploads($request->upload_ids, $user->id, 'user_id');
         }
         if (!($request->has('meta_keys') && $request->has('meta_values'))) {
             return $this->handleResponse($user, 'User successfully created')->setStatusCode(201);
@@ -93,7 +86,7 @@ class UserController extends BaseController
         if (!Auth::user()->hasPermission('read')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
-        $user->upload = $user->uploads()->get();
+        $user->upload = $user->upload()->get();
 
         return $this->handleResponse($user, 'User data details');
     }
@@ -118,18 +111,7 @@ class UserController extends BaseController
         $user->roles()->sync($roleIds);
         $user->password = bcrypt($request->new_password);
         if ($request->upload_ids) {
-            $uploads = $user->upload()->get();
-            foreach ($uploads as $upload) {
-                Storage::delete($upload->path);
-                $upload->delete();
-            }
-            foreach ($request->upload_ids as $upload_id) {
-                $upload = Upload::find($upload_id);
-                if ($upload) {
-                    $upload->user_id = $user->id;
-                    $upload->save();
-                }
-            }
+            handleUploads($request->upload_ids, $user->id, 'user_id');
         }
         $user->save();
         if (!($request->has('meta_keys') && $request->has('meta_values'))) {

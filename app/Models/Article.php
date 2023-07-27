@@ -21,4 +21,9 @@ class Article extends Model
     {
         return $this->hasMany(ArticleDetail::class);
     }
+
+    public function upload()
+    {
+        return $this->hasMany(Upload::class);
+    }
 }

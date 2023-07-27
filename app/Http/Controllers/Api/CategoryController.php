@@ -58,13 +58,7 @@ class CategoryController extends BaseController
         $category->author = $user_id;
         $category->save();
         if ($request->upload_ids) {
-            foreach ($request->upload_ids as $upload_id) {
-                $upload = Upload::find($upload_id);
-                if ($upload) {
-                    $upload->category_id = $category->id;
-                    $upload->save();
-                }
-            }
+            handleUploads($request->upload_ids, $category->id, 'category_id');
         }
 
         return $this->handleResponse($category, 'Category created successfully');
@@ -73,7 +67,7 @@ class CategoryController extends BaseController
     public function show(Category $category)
     {
         $category->posts = $category->posts()->where('status', 'published')->pluck('title');
-        $category->upload = $category->uploads()->get();
+        $category->upload = $category->upload()->get();
         return $this->handleResponse($category, 'Category data');
     }
 
@@ -91,18 +85,7 @@ class CategoryController extends BaseController
         $category->type = $request->type;
         $category->status = $request->status;
         if ($request->upload_ids) {
-            $uploads = $category->upload()->get();
-            foreach ($uploads as $upload) {
-                Storage::delete($upload->path);
-                $upload->delete();
-            }
-            foreach ($request->upload_ids as $upload_id) {
-                $upload = Upload::find($upload_id);
-                if ($upload) {
-                    $upload->category_id = $category->id;
-                    $upload->save();
-                }
-            }
+            handleUploads($request->upload_ids, $category->id, 'category_id');
         }
         $category->save();
 

@@ -8,6 +8,7 @@ use Intervention\Image\Facades\Image;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Upload;
+use Illuminate\Support\Facades\Auth;
 
 class UploadController extends BaseController
 {
@@ -52,6 +53,7 @@ class UploadController extends BaseController
         $folder = $request->folder;
         $path = 'public/' . $folder . '/' . date('Y/m/d');
         $upload_data = [];
+        $user_id = Auth::id();
 
         if (!Storage::exists($path)) {
             Storage::makeDirectory($path, 0777, true, true);
@@ -67,6 +69,8 @@ class UploadController extends BaseController
             $upload->url = asset(Storage::url($image_path));
             $upload->path = $image_path;
             $upload->width = $width;
+            $upload->status = 'pending';
+            $upload->author = $user_id;
             $upload->save();
             $upload_data[] = $upload;
         }

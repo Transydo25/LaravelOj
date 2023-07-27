@@ -3,11 +3,11 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Api\MediaController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UploadController;
+use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\VerifyEmailController;
 use App\Models\User;
 use App\Models\Post;
@@ -107,4 +107,18 @@ Route::group([
     Route::post('/detail/{post}', [PostController::class, 'updateDetails'])->can('update', 'post');
     Route::put('/', [PostController::class, 'deletePost'])->can('delete', Post::class);
     Route::put('/restore', [PostController::class, 'restore'])->can('restore', Post::class);
+});
+
+//Article
+Route::group([
+    'middleware' => ['jwt.verify', 'auth:api'],
+    'prefix' => 'article'
+], function () {
+    Route::get('/', [ArticleController::class, 'index']);
+    Route::post('/', [ArticleController::class, 'store'])->can('create', Article::class);
+    Route::get('/{article}', [ArticleController::class, 'show']);
+    Route::post('/{article}', [ArticleController::class, 'update'])->can('update', 'article');
+    Route::post('/detail/{article}', [ArticleController::class, 'updateDetails'])->can('update', 'article');
+    Route::put('/', [ArticleController::class, 'deleteArticle'])->can('delete', Article::class);
+    Route::put('/restore', [ArticleController::class, 'restore'])->can('restore', Article::class);
 });

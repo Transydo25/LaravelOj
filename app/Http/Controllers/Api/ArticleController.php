@@ -70,9 +70,13 @@ class ArticleController extends BaseController
         $categoryIds = $request->categories;
         $user_id = Auth::id();
         $languages = config('app.languages');
+        $seoTitle = $request->title . ' - Duy';
+        $seoDescription = Str::limit($request->description, 160);
 
         $article->title = $request->title;
+        $article->seo_title = $seoTitle;
         $article->description = $request->description;
+        $article->seo_description = $seoDescription;
         $article->content = $request->content;
         $article->status = 'pending';
         $article->type = $request->type;
@@ -80,13 +84,7 @@ class ArticleController extends BaseController
         $article->user_id = $user_id;
         $article->save();
         if ($request->upload_ids) {
-            foreach ($request->upload_ids as $upload_id) {
-                $upload = Upload::find($upload_id);
-                if ($upload) {
-                    $upload->article_id = $article->id;
-                    $upload->save();
-                }
-            }
+            handleUploads($request->upload_ids, $article->id, 'article_id');
         }
         $article->categories()->sync($categoryIds);
         foreach ($languages as $language) {
@@ -108,7 +106,7 @@ class ArticleController extends BaseController
             $article->article_detail = $article->articleDetail()->where('lang', $language)->get();
         }
         $article->categories = $article->categories()->where('status', 'active')->pluck('name');
-        $article->upload = $article->uploads()->get();
+        $article->upload = $article->upload()->get();
         return $this->handleResponse($article, 'article data details');
     }
 
@@ -142,13 +140,7 @@ class ArticleController extends BaseController
         $article->type = $request->type;
         $article->slug = $slug;
         if ($request->upload_ids) {
-            foreach ($request->upload_ids as $upload_id) {
-                $upload = Upload::find($upload_id);
-                if ($upload) {
-                    $upload->article_id = $article->id;
-                    $upload->save();
-                }
-            }
+            handleUploads($request->upload_ids, $article->id, 'article_id');
         }
         $article->categories()->sync($categoryIds);
         $article->save();
@@ -213,7 +205,7 @@ class ArticleController extends BaseController
         return $this->handleResponse([], 'article restored successfully!');
     }
 
-    public function deletearticle(Request $request)
+    public function deleteArticle(Request $request)
     {
         if (!Auth::user()->hasPermission('delete')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
