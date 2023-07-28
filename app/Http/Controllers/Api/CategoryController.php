@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Upload;
+use Illuminate\Support\Facades\DB;
 
 
 
@@ -50,6 +51,11 @@ class CategoryController extends BaseController
 
         $slug = Str::slug($request->name);
         $user_id = Auth::id();
+
+        if ($request->upload_ids) {
+            $category->upload_id = json_encode($request->upload_ids);
+            handleUploads($request->upload_ids);
+        }
         $category->name = $request->name;
         $category->description = $request->description;
         $category->slug = $slug;
@@ -57,9 +63,6 @@ class CategoryController extends BaseController
         $category->status = $request->status;
         $category->author = $user_id;
         $category->save();
-        if ($request->upload_ids) {
-            handleUploads($request->upload_ids, $category->id, 'category_id');
-        }
 
         return $this->handleResponse($category, 'Category created successfully');
     }
@@ -67,7 +70,10 @@ class CategoryController extends BaseController
     public function show(Category $category)
     {
         $category->posts = $category->posts()->where('status', 'published')->pluck('title');
-        $category->upload = $category->upload()->get();
+        $upload_ids = json_decode($category->upload_id, true);
+        if ($upload_ids) {
+            $category->uploads = DB::table('uploads')->whereIn('id', $upload_ids)->get();
+        }
         return $this->handleResponse($category, 'Category data');
     }
 
@@ -85,7 +91,8 @@ class CategoryController extends BaseController
         $category->type = $request->type;
         $category->status = $request->status;
         if ($request->upload_ids) {
-            handleUploads($request->upload_ids, $category->id, 'category_id');
+            $category->upload_id = json_encode($request->upload_ids);
+            handleUploads($request->upload_ids);
         }
         $category->save();
 
@@ -133,7 +140,10 @@ class CategoryController extends BaseController
 
         foreach ($categories as $category) {
             if ($type === 'force_delete') {
-                $uploads = $category->upload()->get();
+                $upload_ids = json_decode($category->upload_id, true);
+                if ($upload_ids) {
+                    $uploads = DB::table('uploads')->whereIn('id', $upload_ids)->get();
+                }
                 foreach ($uploads as $upload) {
                     Storage::delete($upload->path);
                     $upload->delete();

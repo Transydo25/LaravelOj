@@ -17,18 +17,19 @@ class Article extends Model
     {
         return $this->belongsToMany(Category::class);
     }
+
     public function articleDetail()
     {
         return $this->hasMany(ArticleDetail::class);
     }
 
-    public function upload()
-    {
-        return $this->hasMany(Upload::class);
-    }
-
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function revision()
+    {
+        return $this->hasMany(Revision::class);
     }
 }

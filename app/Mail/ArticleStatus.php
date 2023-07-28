@@ -35,6 +35,7 @@ class ArticleStatus extends Mailable
         return $this->view('emails.article_status')
             ->subject($subject)
             ->with([
+                'subject' => $subject,
                 'article' => $this->article,
                 'status' => $this->status,
                 'reason' => $this->reason,

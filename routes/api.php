@@ -59,6 +59,7 @@ Route::group([
     Route::put('/', [UserController::class, 'destroy'])->can('delete', 'user');
     Route::put('/restore', [UserController::class, 'restore'])->can('restore', User::class);
     Route::get('/meta', [UserController::class, 'profile']);
+    Route::post('/approve/{article}', [UserController::class, 'approve'])->can('status', User::class);
 });
 
 //Mail
@@ -115,8 +116,7 @@ Route::group([
     'prefix' => 'article'
 ], function () {
     Route::get('/', [ArticleController::class, 'index']);
-    Route::post('/', [ArticleController::class, 'store'])->can('create', Article::class);
-    Route::post('/status', [ArticleController::class, 'status'])->can('status', Article::class);
+    Route::post('/', [ArticleController::class, 'store']);
     Route::get('/{article}', [ArticleController::class, 'show']);
     Route::post('/{article}', [ArticleController::class, 'update'])->can('update', 'article');
     Route::post('/detail/{article}', [ArticleController::class, 'updateDetails'])->can('update', 'article');

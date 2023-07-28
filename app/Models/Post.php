@@ -25,9 +25,4 @@ class Post extends Model
     {
         return $this->hasMany(PostDetail::class);
     }
-
-    public function upload()
-    {
-        return $this->hasMany(Upload::class);
-    }
 }

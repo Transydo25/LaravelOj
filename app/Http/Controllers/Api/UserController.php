@@ -12,6 +12,12 @@ use App\Traits\HasPermission;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ArticleStatus;
+use App\Models\Article;
+use Illuminate\Support\Facades\DB;
+
+
 
 class UserController extends BaseController
 {
@@ -56,15 +62,17 @@ class UserController extends BaseController
         ]);
 
         $user = new User;
+
+        if ($request->upload_ids) {
+            $user->upload_id = json_encode($request->upload_ids);
+            handleUploads($request->upload_ids);
+        }
         $roleIds = $request->roles;
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
         $user->save();
         $user->roles()->sync($roleIds);
-        if ($request->upload_ids) {
-            handleUploads($request->upload_ids, $user->id, 'user_id');
-        }
         if (!($request->has('meta_keys') && $request->has('meta_values'))) {
             return $this->handleResponse($user, 'User successfully created')->setStatusCode(201);
         }
@@ -86,8 +94,10 @@ class UserController extends BaseController
         if (!Auth::user()->hasPermission('read')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
-        $user->upload = $user->upload()->get();
-
+        $upload_ids = json_decode($article->upload_id, true);
+        if ($upload_ids) {
+            $user->uploads = DB::table('uploads')->whereIn('id', $upload_ids)->get();
+        }
         return $this->handleResponse($user, 'User data details');
     }
 
@@ -111,7 +121,8 @@ class UserController extends BaseController
         $user->roles()->sync($roleIds);
         $user->password = bcrypt($request->new_password);
         if ($request->upload_ids) {
-            handleUploads($request->upload_ids, $user->id, 'user_id');
+            $user->upload_id = json_encode($request->upload_ids);
+            handleUploads($request->upload_ids);
         }
         $user->save();
         if (!($request->has('meta_keys') && $request->has('meta_values'))) {
@@ -171,7 +182,10 @@ class UserController extends BaseController
 
         foreach ($users as $user) {
             if ($type === 'force_delete') {
-                $uploads = $user->upload()->get();
+                $upload_ids = json_decode($user->upload_id, true);
+                if ($upload_ids) {
+                    $uploads = DB::table('uploads')->whereIn('id', $upload_ids)->get();
+                }
                 foreach ($uploads as $upload) {
                     Storage::delete($upload->path);
                     $upload->delete();
@@ -247,5 +261,34 @@ class UserController extends BaseController
         $favorite_posts = Post::whereIn('id', $post_ids)->get();
 
         return $this->handleResponse($favorite_posts, 'Favorite posts of the user.');
+    }
+
+    public function approve(Request $request, Article $article)
+    {
+        if (!Auth::user()->hasPermission('update')) {
+            return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
+        }
+
+        $request->validate([
+            'status' => 'required|string|in:published,reject',
+            'reason' => 'string',
+        ]);
+
+        $author_email =  $article->user->email;
+
+        if ($request->status === 'published') {
+            $article->status = 'published';
+            $article->published_at = now();
+            $article->save();
+            Mail::to($author_email)->send(new ArticleStatus($article, 'published'));
+        }
+        if ($request->status === 'reject') {
+            Mail::to($author_email)->send(new ArticleStatus($article, 'reject', $request->reason));
+
+            $article->status = 'pending';
+            $article->save();
+        }
+
+        return $this->handleResponse($article, 'article status updated successfully');
     }
 }

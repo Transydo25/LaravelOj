@@ -10,8 +10,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Upload;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\ArticleStatus;
+use Illuminate\Support\Facades\DB;
+
+
 
 
 class ArticleController extends BaseController
@@ -22,7 +23,7 @@ class ArticleController extends BaseController
         $languages = config('app.languages');
         $language = in_array($language, $languages) ? $language : '';
         $status = $request->input('status');
-        $layout_status = ['draft', 'published', 'archived', 'pending'];
+        $layout_status = ['published', 'reject', 'pending'];
         $sort = $request->input('sort');
         $sort_types = ['desc', 'asc'];
         $sort_option = ['title', 'created_at', 'updated_at'];
@@ -75,20 +76,20 @@ class ArticleController extends BaseController
         $seo_title = $request->title . ' - Duy';
         $seo_description = Str::limit($request->description, 160);
 
+        if ($request->upload_ids) {
+            $article->upload_id = json_encode($request->upload_ids);
+            handleUploads($request->upload_ids);
+        }
         $article->title = $request->title;
         $article->seo_title = $seo_title;
         $article->description = $request->description;
         $article->seo_description = $seo_description;
         $article->content = $request->content;
         $article->status = 'pending';
-        $article->type = $request->type;
         $article->slug = $slug;
         $article->user_id = $user_id;
         $article->save();
-        if ($request->upload_ids) {
-            handleUploads($request->upload_ids, $article->id, 'article_id');
-        }
-        $article->categories()->sync($categoryIds);
+        $article->category()->sync($categoryIds);
         foreach ($languages as $language) {
             $article_detail = new articleDetail;
             $article_detail->title = translate($request->title, $language);
@@ -101,42 +102,17 @@ class ArticleController extends BaseController
         return $this->handleResponse($article, 'article created successfully');
     }
 
-    public function status(Request $request, Article $article)
-    {
-        if (!Auth::user()->hasPermission('update')) {
-            return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
-        }
-
-        $request->validate([
-            'status' => 'required|string|in:published,reject',
-            'reason' => 'string',
-        ]);
-
-        $author_email =  $article->user->email;
-
-        if ($request->status === 'published') {
-            $article->status = 'published';
-            $article->save();
-            Mail::to($author_email)->send(new ArticleStatus($article, 'published'));
-        }
-        if ($request->status === 'reject') {
-            Mail::to($author_email)->send(new ArticleStatus($article, 'reject', $request->reason));
-
-            $article->status = 'pending';
-            $article->save();
-        }
-
-        return $this->handleResponse($article, 'article status updated successfully');
-    }
-
     public function show(Request $request, article $article)
     {
         $language = $request->language;
         if ($language) {
             $article->article_detail = $article->articleDetail()->where('lang', $language)->get();
         }
-        $article->categories = $article->categories()->where('status', 'active')->pluck('name');
-        $article->upload = $article->upload()->get();
+        $article->categories = $article->category()->where('status', 'active')->pluck('name');
+        $upload_ids = json_decode($article->upload_id, true);
+        if ($upload_ids) {
+            $article->uploads = DB::table('uploads')->whereIn('id', $upload_ids)->get();
+        }
         return $this->handleResponse($article, 'article data details');
     }
 
@@ -166,9 +142,10 @@ class ArticleController extends BaseController
         $article->type = $request->type;
         $article->slug = $slug;
         if ($request->upload_ids) {
-            handleUploads($request->upload_ids, $article->id, 'article_id');
+            $article->upload_id = json_encode($request->upload_ids);
+            handleUploads($request->upload_ids);
         }
-        $article->categories()->sync($categoryIds);
+        $article->category()->sync($categoryIds);
         $article->save();
         $article->articleDetail()->delete();
         foreach ($languages as $language) {
@@ -205,6 +182,8 @@ class ArticleController extends BaseController
         $article_detail->title = $request->title;
         $article_detail->content = $request->content;
         $article_detail->save();
+        $article->status = 'pending';
+        $article->save();
         return $this->handleResponse($article_detail, 'article detail updated successfully');
     }
 
@@ -249,7 +228,10 @@ class ArticleController extends BaseController
 
         foreach ($articles as $article) {
             if ($type === 'force_delete') {
-                $uploads = $article->upload()->get();
+                $upload_ids = json_decode($article->upload_id, true);
+                if ($upload_ids) {
+                    $uploads = DB::table('uploads')->whereIn('id', $upload_ids)->get();
+                }
                 foreach ($uploads as $upload) {
                     Storage::delete($upload->path);
                     $upload->delete();

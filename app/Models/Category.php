@@ -16,9 +16,4 @@ class Category extends Model
     {
         return $this->belongsToMany(Post::class);
     }
-
-    public function upload()
-    {
-        return $this->hasMany(Upload::class);
-    }
 }

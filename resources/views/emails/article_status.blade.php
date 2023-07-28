@@ -2,12 +2,12 @@
 <html>
 
 <head>
-    <title>{{ $subject }}</title>
+    <title>{{$subject}}</title>
 </head>
 
 <body>
-    <h1>{{ $subject }}</h1>
-    <p>Hi {{ $article->author_name }},</p>
+    <h1>{{$subject}}</h1>
+    <p>Hi {{$article->user->name}},</p>
     @if ($status === 'published')
     <p>Your article "{{ $article->title }}" has been published.</p>
     @elseif ($status === 'reject')

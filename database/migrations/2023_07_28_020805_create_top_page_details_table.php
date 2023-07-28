@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTopPagesTable extends Migration
+class CreateTopPageDetailsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,14 @@ class CreateTopPagesTable extends Migration
      */
     public function up()
     {
-        Schema::create('top_pages', function (Blueprint $table) {
+        Schema::create('top_page_details', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('top_page_id');
             $table->string('name');
             $table->string('description');
             $table->string('content');
-            $table->enum('status', ['active', 'inactive',])->default('inactive');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->string('lang')->default('en');
+            $table->foreign('top_page_id')->references('id')->on('top_pages')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -32,6 +32,6 @@ class CreateTopPagesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('top_pages');
+        Schema::dropIfExists('top_page_details');
     }
 }

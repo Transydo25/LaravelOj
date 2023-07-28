@@ -11,6 +11,8 @@ use App\Models\Upload;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
 
 class PostController extends BaseController
 {
@@ -73,6 +75,10 @@ class PostController extends BaseController
         $user_id = Auth::id();
         $languages = config('app.languages');
 
+        if ($request->upload_ids) {
+            $post->upload_id = json_encode($request->upload_ids);
+            handleUploads($request->upload_ids);
+        }
         $post->title = $request->title;
         $post->content = $request->content;
         $post->status = $request->status;
@@ -80,9 +86,6 @@ class PostController extends BaseController
         $post->slug = $slug;
         $post->author = $user_id;
         $post->save();
-        if ($request->upload_ids) {
-            handleUploads($request->upload_ids, $post->id, 'post_id');
-        }
         $post->categories()->sync($categoryIds);
         foreach ($languages as $language) {
             $post_detail = new PostDetail;
@@ -116,7 +119,10 @@ class PostController extends BaseController
         }
         $post->categories = $post->categories()->where('status', 'active')->pluck('name');
         $post->post_meta = $post->postMeta()->get();
-        $post->upload = $post->upload()->get();
+        $upload_ids = json_decode($article->upload_id, true);
+        if ($upload_ids) {
+            $post->uploads = DB::table('uploads')->whereIn('id', $upload_ids)->get();
+        }
         return $this->handleResponse($post, 'Post data details');
     }
 
@@ -173,7 +179,8 @@ class PostController extends BaseController
         $post->type = $request->type;
         $post->slug = $slug;
         if ($request->upload_ids) {
-            handleUploads($request->upload_ids, $post->id, 'post_id');
+            $post->upload_id = json_encode($request->upload_ids);
+            handleUploads($request->upload_ids);
         }
         $post->categories()->sync($categoryIds);
         $post->save();
@@ -248,7 +255,10 @@ class PostController extends BaseController
 
         foreach ($posts as $post) {
             if ($type === 'force_delete') {
-                $uploads = $post->upload()->get();
+                $upload_ids = json_decode($post->upload_id, true);
+                if ($upload_ids) {
+                    $uploads = DB::table('uploads')->whereIn('id', $upload_ids)->get();
+                }
                 foreach ($uploads as $upload) {
                     Storage::delete($upload->path);
                     $upload->delete();
