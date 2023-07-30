@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ArticleStatus;
 use App\Models\Article;
+use App\Models\Revision;
+use App\Models\ArticleDetail;
+use App\Models\RevisionDetail;
+
 use Illuminate\Support\Facades\DB;
 
 
@@ -94,7 +98,7 @@ class UserController extends BaseController
         if (!Auth::user()->hasPermission('read')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
-        $upload_ids = json_decode($article->upload_id, true);
+        $upload_ids = json_decode($user->upload_id, true);
         if ($upload_ids) {
             $user->uploads = DB::table('uploads')->whereIn('id', $upload_ids)->get();
         }
@@ -290,5 +294,60 @@ class UserController extends BaseController
         }
 
         return $this->handleResponse($article, 'article status updated successfully');
+    }
+
+    public function approveRevision(Request $request, Revision $revision)
+    {
+        if (!Auth::user()->hasPermission('update')) {
+            return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
+        }
+
+        $request->validate([
+            'status' => 'required|string|in:published,reject',
+            'reason' => 'string',
+        ]);
+
+        $article = $revision->article;
+        $revision = $article->revision()->latest();
+        $author_email =  $revision->user->email;
+        $languages = config('app.languages');
+
+        if ($request->status === 'reject') {
+            // Mail::to($author_email)->send(new revisionStatus($revision, 'reject', $request->reason));
+            return $this->handleResponse($revision, 'reject successfully');
+        }
+
+        $article->title = $revision->title;
+        $article->description = $revision->description;
+        $article->content = $revision->content;
+        if ($revision->upload_id) {
+            $article->upload_id = json_encode($request->upload_ids);
+            handleUploads($request->upload_ids);
+            $article->upload_id = $revision->upload_id;
+        }
+        $article->save();
+        foreach ($languages as $language) {
+            $revisionDetail = $revision->revisionDetails->where('lang', $language)->first();
+            $articleDetail = $article->articleDetails->where('lang', $language)->first();
+            $articleDetail->title = $revisionDetail->title;
+            $articleDetail->description = $revisionDetail->description;
+            $articleDetail->content = $revisionDetail->content;
+            $articleDetail->save();
+        }
+        $revisions = $article->revisions()->where('version', '<', $revision->version)->delete();
+        foreach ($revisions as $revision) {
+            $upload_ids = json_decode($revision->upload_id, true);
+            if ($upload_ids) {
+                $uploads = Upload::whereIn('id', $upload_ids)->get();
+            }
+            foreach ($uploads as $upload) {
+                Storage::delete($upload->path);
+                $upload->delete();
+            }
+        }
+        $article->revision()->delete();
+
+        // Mail::to($author_email)->send(new revisionStatus($revision, 'published'));
+        return $this->handleResponse($revision, 'reject successfully');
     }
 }

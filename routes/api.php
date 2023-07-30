@@ -12,6 +12,7 @@ use App\Http\Controllers\VerifyEmailController;
 use App\Models\User;
 use App\Models\Post;
 use App\Models\Category;
+use App\Models\Article;
 
 
 
@@ -60,6 +61,7 @@ Route::group([
     Route::put('/restore', [UserController::class, 'restore'])->can('restore', User::class);
     Route::get('/meta', [UserController::class, 'profile']);
     Route::post('/approve/{article}', [UserController::class, 'approve'])->can('status', User::class);
+    Route::post('/revision/{revision}', [UserController::class, 'approveRevision'])->can('status', User::class);
 });
 
 //Mail
@@ -116,10 +118,24 @@ Route::group([
     'prefix' => 'article'
 ], function () {
     Route::get('/', [ArticleController::class, 'index']);
-    Route::post('/', [ArticleController::class, 'store']);
+    Route::post('/', [ArticleController::class, 'store'])->can('create', Article::class);
     Route::get('/{article}', [ArticleController::class, 'show']);
     Route::post('/{article}', [ArticleController::class, 'update'])->can('update', 'article');
     Route::post('/detail/{article}', [ArticleController::class, 'updateDetails'])->can('update', 'article');
     Route::put('/', [ArticleController::class, 'deleteArticle'])->can('delete', Article::class);
     Route::put('/restore', [ArticleController::class, 'restore'])->can('restore', Article::class);
+});
+
+//Revision
+Route::group([
+    'middleware' => ['jwt.verify', 'auth:api'],
+    'prefix' => 'revision'
+], function () {
+    Route::get('/', [RevisionController::class, 'index']);
+    Route::post('/', [RevisionController::class, 'store'])->can('create', Revision::class);
+    Route::get('/{Revision}', [RevisionController::class, 'show']);
+    Route::post('/{Revision}', [RevisionController::class, 'update'])->can('update', 'Revision');
+    Route::post('/detail/{Revision}', [RevisionController::class, 'updateDetails'])->can('update', 'Revision');
+    Route::put('/', [RevisionController::class, 'deleteRevision'])->can('delete', Revision::class);
+    Route::put('/restore', [RevisionController::class, 'restore'])->can('restore', Revision::class);
 });

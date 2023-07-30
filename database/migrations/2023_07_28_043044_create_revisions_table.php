@@ -19,9 +19,12 @@ class CreateRevisionsTable extends Migration
             $table->string('title');
             $table->text('description');
             $table->text('content');
+            $table->unsignedBigInteger('upload_id');
             $table->bigInteger('version');
             $table->unsignedBigInteger('user_id');
+            $table->enum('status', ['pending', 'published', 'reject'])->default('pending');
             $table->foreign('article_id')->references('id')->on('articles')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
     }

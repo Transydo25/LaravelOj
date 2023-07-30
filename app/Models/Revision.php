@@ -19,4 +19,9 @@ class Revision extends Model
     {
         return $this->hasMany(RevisionDetail::class);
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

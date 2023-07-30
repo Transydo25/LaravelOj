@@ -94,6 +94,7 @@ class ArticleController extends BaseController
             $article_detail = new articleDetail;
             $article_detail->title = translate($request->title, $language);
             $article_detail->content = translate($request->content, $language);
+            $article_detail->description = translate($request->description, $language);
             $article_detail->article_id = $article->id;
             $article_detail->lang = $language;
             $article_detail->save();
@@ -165,6 +166,9 @@ class ArticleController extends BaseController
         if (!Auth::user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
+        if ($article->status == 'published') {
+            return $this->handleResponse([], 'Can not update published article');
+        }
 
         $request->validate([
             'title' => 'required|string|max: 255',
@@ -181,9 +185,9 @@ class ArticleController extends BaseController
         $article_detail = $article->articleDetail()->where('lang', $language)->first();
         $article_detail->title = $request->title;
         $article_detail->content = $request->content;
+        $article_detail->description = $request->description;
         $article_detail->save();
-        $article->status = 'pending';
-        $article->save();
+
         return $this->handleResponse($article_detail, 'article detail updated successfully');
     }
 

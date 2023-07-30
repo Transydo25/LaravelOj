@@ -50,8 +50,7 @@ class UploadController extends BaseController
         ]);
 
         $images = $request->images;
-        $folder = $request->folder;
-        $path = 'public/' . $folder . '/' . date('Y/m/d');
+        $path = 'public/upload'  . '/' . date('Y/m/d');
         $upload_data = [];
         $user_id = Auth::id();
 
