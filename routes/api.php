@@ -148,7 +148,7 @@ Route::group([
 ], function () {
     Route::get('/', [TopPageController::class, 'index']);
     Route::post('/', [TopPageController::class, 'store']);
-    Route::get('/{TopPage}', [TopPageController::class, 'show']);
-    Route::post('/{TopPage}', [TopPageController::class, 'update'])->can('update', 'TopPage');
-    Route::post('/detail/{TopPage}', [TopPageController::class, 'updateDetails'])->can('update', 'TopPage');
+    Route::get('/{top_page}', [TopPageController::class, 'show']);
+    Route::post('/{top_page}', [TopPageController::class, 'update'])->can('update', 'TopPage');
+    Route::post('/detail/{top_page}', [TopPageController::class, 'updateDetails'])->can('update', 'TopPage');
 });

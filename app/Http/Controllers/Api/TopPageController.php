@@ -45,9 +45,15 @@ class TopPageController extends BaseController
                 $q->where('lang', $language);
             }]);
         }
-        $TopPage = $query->orderBy($sort_by, $sort)->paginate($limit);
+        $top_pages = $query->orderBy($sort_by, $sort)->paginate($limit);
+        foreach ($top_pages as $top_page) {
+            $upload_ids = json_decode($top_page->upload_id, true);
+            if ($upload_ids) {
+                $top_page->uploads = Upload::whereIn('id', $upload_ids)->get();
+            }
+        }
 
-        return $this->handleResponse($TopPage, 'TopPage data');
+        return $this->handleResponse($top_pages, 'TopPage data');
     }
 
 
