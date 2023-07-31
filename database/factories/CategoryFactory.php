@@ -22,8 +22,8 @@ class CategoryFactory extends Factory
             'name' => $name,
             'description' => $this->faker->paragraph,
             'slug' => Str::slug($name),
-            'type' => $this->faker->randomElement(['public', 'private']),
-            'status' => $this->faker->randomElement(['active', 'deactive']),
+            'type' => $this->faker->randomElement(['page', 'animal', 'sale']),
+            'status' => $this->faker->randomElement(['active', 'inactive']),
             'author' => User::whereHas('roles', function ($query) {
                 $query->whereIn('role_id', [1, 3]);
             })->inRandomOrder()->pluck('id')->first(),

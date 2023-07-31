@@ -18,6 +18,7 @@ class CreateArticleDetailsTable extends Migration
             $table->unsignedBigInteger('article_id');
             $table->string('title');
             $table->string('content');
+            $table->string('description');
             $table->string('lang')->default('en');
             $table->foreign('article_id')->references('id')->on('articles')->onDelete('cascade');
             $table->timestamps();

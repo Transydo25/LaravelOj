@@ -18,6 +18,7 @@ class CreateRevisionDetailsTable extends Migration
             $table->unsignedBigInteger('revision_id');
             $table->string('title');
             $table->string('content');
+            $table->string('description');
             $table->string('lang')->default('en');
             $table->foreign('revision_id')->references('id')->on('revisions')->onDelete('cascade');
             $table->timestamps();

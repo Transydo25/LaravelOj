@@ -308,7 +308,7 @@ class UserController extends BaseController
         ]);
 
         $article = $revision->article;
-        $revision = $article->revision()->latest();
+        $revision = $article->revision()->latest()->first();
         $author_email =  $revision->user->email;
         $languages = config('app.languages');
 
@@ -327,14 +327,14 @@ class UserController extends BaseController
         }
         $article->save();
         foreach ($languages as $language) {
-            $revisionDetail = $revision->revisionDetails->where('lang', $language)->first();
-            $articleDetail = $article->articleDetails->where('lang', $language)->first();
+            $revisionDetail = $revision->revisionDetail->where('lang', $language)->first();
+            $articleDetail = $article->articleDetail->where('lang', $language)->first();
             $articleDetail->title = $revisionDetail->title;
             $articleDetail->description = $revisionDetail->description;
             $articleDetail->content = $revisionDetail->content;
             $articleDetail->save();
         }
-        $revisions = $article->revisions()->where('version', '<', $revision->version)->delete();
+        $revisions = $article->revision()->where('version', '<', $revision->version);
         foreach ($revisions as $revision) {
             $upload_ids = json_decode($revision->upload_id, true);
             if ($upload_ids) {
@@ -348,6 +348,6 @@ class UserController extends BaseController
         $article->revision()->delete();
 
         // Mail::to($author_email)->send(new revisionStatus($revision, 'published'));
-        return $this->handleResponse($revision, 'reject successfully');
+        return $this->handleResponse([], 'published successfully');
     }
 }

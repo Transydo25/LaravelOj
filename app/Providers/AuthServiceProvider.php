@@ -6,8 +6,12 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 use Illuminate\Support\Facades\Gate;
 use App\Models\User;
 use App\Models\Post;
+use App\Models\Article;
+use App\Models\Revision;
 use App\Policies\UserPolicy;
 use App\Policies\PostPolicy;
+use App\Policies\ArticlePolicy;
+use App\Policies\RevisionPolicy;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 
@@ -22,6 +26,8 @@ class AuthServiceProvider extends ServiceProvider
         // 'App\Model' => 'App\Policies\ModelPolicy',
         User::class => UserPolicy::class,
         Post::class => PostPolicy::class,
+        Revision::class => RevisionPolicy::class,
+        Article::class => ArticlePolicy::class,
     ];
 
     /**

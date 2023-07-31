@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\ArticleController;
+use App\Http\Controllers\Api\RevisionController;
 use App\Http\Controllers\VerifyEmailController;
 use App\Models\User;
 use App\Models\Post;
@@ -61,7 +62,7 @@ Route::group([
     Route::put('/restore', [UserController::class, 'restore'])->can('restore', User::class);
     Route::get('/meta', [UserController::class, 'profile']);
     Route::post('/approve/{article}', [UserController::class, 'approve'])->can('status', User::class);
-    Route::post('/revision/{revision}', [UserController::class, 'approveRevision'])->can('status', User::class);
+    Route::post('/revision/{revision}', [UserController::class, 'approveRevision']);
 });
 
 //Mail
@@ -132,7 +133,7 @@ Route::group([
     'prefix' => 'revision'
 ], function () {
     Route::get('/', [RevisionController::class, 'index']);
-    Route::post('/', [RevisionController::class, 'store'])->can('create', Revision::class);
+    Route::post('/{article}', [RevisionController::class, 'store'])->can('create', Revision::class);
     Route::get('/{Revision}', [RevisionController::class, 'show']);
     Route::post('/{Revision}', [RevisionController::class, 'update'])->can('update', 'Revision');
     Route::post('/detail/{Revision}', [RevisionController::class, 'updateDetails'])->can('update', 'Revision');

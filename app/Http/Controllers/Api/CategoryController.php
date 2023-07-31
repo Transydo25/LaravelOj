@@ -20,7 +20,7 @@ class CategoryController extends BaseController
     public function index(Request $request)
     {
         $status = $request->input('status');
-        $layout_status = ['active', 'deactive'];
+        $layout_status = ['active', 'inactive'];
         $sort = $request->input('sort');
         $sort_types = ['desc', 'asc'];
         $sort_option = ['name', 'created_at', 'updated_at'];

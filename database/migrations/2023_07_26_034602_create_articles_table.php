@@ -23,6 +23,7 @@ class CreateArticlesTable extends Migration
             $table->string('slug');
             $table->enum('status', ['pending', 'published', 'reject'])->default('pending');
             $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('upload_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamp('published_at')->nullable();
             $table->timestamps();

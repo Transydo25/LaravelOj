@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\BaseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Article;
@@ -10,7 +10,7 @@ use App\Models\Revision;
 use App\Models\RevisionDetail;
 
 
-class RevisionController extends Controller
+class RevisionController extends BaseController
 {
 
     public function index()
@@ -37,7 +37,7 @@ class RevisionController extends Controller
         $revision->description = $article->description;
         $revision->content = $article->content;
         $revision->upload_id = $article->upload_id;
-        $revision->version = $article->revisions()->where('article_id', $article->id)->count() + 1;
+        $revision->version = $article->revision()->where('article_id', $article->id)->count() + 1;
         $revision->user_id = $article->user_id;
         $revision->status = 'pending';
         $revision->save();
@@ -46,6 +46,7 @@ class RevisionController extends Controller
             $revision_detail->title = Translate($revision->title, $language);
             $revision_detail->content = Translate($revision->content, $language);
             $revision_detail->description = Translate($revision->description, $language);
+            $revision_detail->revision_id = $revision->id;
             $revision_detail->lang = $language;
             $revision_detail->save();
         }

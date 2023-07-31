@@ -21,6 +21,7 @@ class CreatePostsTable extends Migration
             $table->enum('status', ['draft', 'published', 'archived'])->default('draft');
             $table->string('type');
             $table->string('author');
+            $table->unsignedBigInteger('upload_id');
             $table->timestamps();
         });
     }
