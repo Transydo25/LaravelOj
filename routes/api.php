@@ -136,9 +136,7 @@ Route::group([
     Route::get('/{RevisionArticle}', [RevisionArticleController::class, 'show']);
     Route::get('/list/{Article}', [RevisionArticleController::class, 'list']);
     Route::post('/{RevisionArticle}', [RevisionArticleController::class, 'update'])->can('update', 'RevisionArticle');
-    Route::post('/review/{RevisionArticle}', [RevisionArticleController::class, 'review'])->can('update', 'RevisionArticle');
     Route::post('/detail/{RevisionArticle}', [RevisionArticleController::class, 'updateDetails'])->can('update', 'RevisionArticle');
-    Route::delete('/', [RevisionArticleController::class, 'destroy'])->can('delete', RevisionArticle::class);
 });
 
 //Top Page

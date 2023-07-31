@@ -9,6 +9,8 @@ use App\Models\Article;
 use App\Models\RevisionArticle;
 use App\Models\RevisionArticleDetail;
 use App\Models\Upload;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ArticleStatus;
 
 
 class RevisionArticleController extends BaseController
@@ -74,7 +76,7 @@ class RevisionArticleController extends BaseController
         $revision_article->upload_id = $article->upload_id;
         $revision_article->version = $article->revisionArticle()->where('article_id', $article->id)->count() + 1;
         $revision_article->user_id = $article->user_id;
-        $revision_article->status = 'draft';
+        $revision_article->status = 'pending';
         $revision_article->save();
         foreach ($languages as $language) {
             $revision_article_detail = new RevisionArticleDetail;
@@ -147,6 +149,7 @@ class RevisionArticleController extends BaseController
             $revision_article_detail->lang = $language;
             $revision_article_detail->save();
         }
+        Mail::to('duybv1800@gmail.com')->send(new ArticleStatus($revision_article, 'pending'));
 
         return $this->handleResponse($revision_article, 'revision_article updated successfully');
     }
@@ -176,15 +179,5 @@ class RevisionArticleController extends BaseController
         $revision_article_detail->save();
 
         return $this->handleResponse($revision_article_detail, 'revision_article detail updated successfully');
-    }
-
-    public function review(RevisionArticle $revision_article)
-    {
-        $revision_article->status = 'pending';
-    }
-
-    public function destroy($id)
-    {
-        //
     }
 }
