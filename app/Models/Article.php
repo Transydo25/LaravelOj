@@ -28,8 +28,8 @@ class Article extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function revision()
+    public function revisionArticle()
     {
-        return $this->hasMany(Revision::class);
+        return $this->hasMany(RevisionArticle::class);
     }
 }

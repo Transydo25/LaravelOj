@@ -15,9 +15,9 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ArticleStatus;
 use App\Models\Article;
-use App\Models\Revision;
 use App\Models\ArticleDetail;
-use App\Models\RevisionDetail;
+use App\Models\RevisionArticle;
+use App\Models\RevisionArticleDetail;
 
 use Illuminate\Support\Facades\DB;
 
@@ -296,7 +296,7 @@ class UserController extends BaseController
         return $this->handleResponse($article, 'article status updated successfully');
     }
 
-    public function approveRevision(Request $request, Revision $revision)
+    public function approveRevisionArticle(Request $request, RevisionArticle $revision_article)
     {
         if (!Auth::user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
@@ -307,36 +307,36 @@ class UserController extends BaseController
             'reason' => 'string',
         ]);
 
-        $article = $revision->article;
-        $revision = $article->revision()->latest()->first();
-        $author_email =  $revision->user->email;
+        $article = $revision_article->article;
+        $author_email =  $revision_article->user->email;
         $languages = config('app.languages');
 
         if ($request->status === 'reject') {
             // Mail::to($author_email)->send(new revisionStatus($revision, 'reject', $request->reason));
-            return $this->handleResponse($revision, 'reject successfully');
+            return $this->handleResponse($revision_article, 'reject successfully');
+            $revision_article->status = 'draft';
         }
 
-        $article->title = $revision->title;
-        $article->description = $revision->description;
-        $article->content = $revision->content;
-        if ($revision->upload_id) {
+        $article->title = $revision_article->title;
+        $article->description = $revision_article->description;
+        $article->content = $revision_article->content;
+        if ($revision_article->upload_id) {
             $article->upload_id = json_encode($request->upload_ids);
             handleUploads($request->upload_ids);
-            $article->upload_id = $revision->upload_id;
+            $article->upload_id = $revision_article->upload_id;
         }
         $article->save();
         foreach ($languages as $language) {
-            $revisionDetail = $revision->revisionDetail->where('lang', $language)->first();
-            $articleDetail = $article->articleDetail->where('lang', $language)->first();
-            $articleDetail->title = $revisionDetail->title;
-            $articleDetail->description = $revisionDetail->description;
-            $articleDetail->content = $revisionDetail->content;
-            $articleDetail->save();
+            $revision_article_detail = $revision_article->revisionArticleDetail->where('lang', $language)->first();
+            $article_detail = $article->articleDetail->where('lang', $language)->first();
+            $article_detail->title = $revision_article_detail->title;
+            $article_detail->description = $revision_article_detail->description;
+            $article_detail->content = $revision_article_detail->content;
+            $article_detail->save();
         }
-        $revisions = $article->revision()->where('version', '<', $revision->version);
-        foreach ($revisions as $revision) {
-            $upload_ids = json_decode($revision->upload_id, true);
+        $revision_articles = $article->revisionArticle()->where('version', '!=', $revision_article->version);
+        foreach ($revision_articles as $revision_article) {
+            $upload_ids = json_decode($revision_article->upload_id, true);
             if ($upload_ids) {
                 $uploads = Upload::whereIn('id', $upload_ids)->get();
             }
@@ -345,7 +345,7 @@ class UserController extends BaseController
                 $upload->delete();
             }
         }
-        $article->revision()->delete();
+        $article->revisionArticle()->delete();
 
         // Mail::to($author_email)->send(new revisionStatus($revision, 'published'));
         return $this->handleResponse([], 'published successfully');

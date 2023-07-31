@@ -2,11 +2,11 @@
 
 namespace App\Policies;
 
-use App\Models\Revision;
+use App\Models\RevisionArticle;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
-class RevisionPolicy
+class RevisionArticlePolicy
 {
     use HandlesAuthorization;
 
@@ -23,13 +23,13 @@ class RevisionPolicy
     }
 
 
-    public function update(User $user, Revision $revision)
+    public function update(User $user, RevisionArticle $revision_article)
     {
-        return $user->hasRole('editor') || $user->id === $revision->user_id;
+        return $user->hasRole('editor') || $user->id === $revision_article->user_id;
     }
 
 
-    public function delete(User $user, Revision $revision)
+    public function delete(User $user, RevisionArticle $revision_article)
     {
         //
     }

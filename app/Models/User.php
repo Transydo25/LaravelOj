@@ -60,8 +60,13 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         return $this->hasMany(Article::class);
     }
 
-    public function revision()
+    public function revisionArticle()
     {
-        return $this->hasMany(Revision::class);
+        return $this->hasMany(RevisionArticle::class);
+    }
+
+    public function topPage()
+    {
+        return $this->hasMany(TopPage::class);
     }
 }

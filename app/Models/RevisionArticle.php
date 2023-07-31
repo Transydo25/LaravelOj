@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Revision extends Model
+class RevisionArticle extends Model
 {
     use HasFactory;
     protected $fillable = ['title', 'description', 'content', 'version'];
@@ -15,9 +15,9 @@ class Revision extends Model
         return $this->belongsTo(Article::class);
     }
 
-    public function revisionDetail()
+    public function revisionArticleDetail()
     {
-        return $this->hasMany(RevisionDetail::class);
+        return $this->hasMany(RevisionArticleDetail::class);
     }
 
     public function user()

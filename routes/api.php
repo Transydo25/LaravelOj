@@ -8,12 +8,13 @@ use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\ArticleController;
-use App\Http\Controllers\Api\RevisionController;
+use App\Http\Controllers\Api\RevisionArticleController;
 use App\Http\Controllers\VerifyEmailController;
 use App\Models\User;
 use App\Models\Post;
 use App\Models\Category;
 use App\Models\Article;
+use App\Models\RevisionArticle;
 
 
 
@@ -62,7 +63,7 @@ Route::group([
     Route::put('/restore', [UserController::class, 'restore'])->can('restore', User::class);
     Route::get('/meta', [UserController::class, 'profile']);
     Route::post('/approve/{article}', [UserController::class, 'approve'])->can('status', User::class);
-    Route::post('/revision/{revision}', [UserController::class, 'approveRevision'])->can('status', User::class);
+    Route::post('/revisionArticle/{revisionArticle}', [UserController::class, 'approveRevisionArticle'])->can('status', User::class);
 });
 
 //Mail
@@ -127,16 +128,17 @@ Route::group([
     Route::put('/restore', [ArticleController::class, 'restore'])->can('restore', Article::class);
 });
 
-//Revision
+//RevisionArticle
 Route::group([
     'middleware' => ['jwt.verify', 'auth:api'],
-    'prefix' => 'revision'
+    'prefix' => 'revisionArticle'
 ], function () {
-    Route::get('/', [RevisionController::class, 'index']);
-    Route::post('/{article}', [RevisionController::class, 'store'])->can('create', Revision::class);
-    Route::get('/{Revision}', [RevisionController::class, 'show']);
-    Route::post('/{Revision}', [RevisionController::class, 'update'])->can('update', 'Revision');
-    Route::post('/detail/{Revision}', [RevisionController::class, 'updateDetails'])->can('update', 'Revision');
-    Route::put('/', [RevisionController::class, 'deleteRevision'])->can('delete', Revision::class);
-    Route::put('/restore', [RevisionController::class, 'restore'])->can('restore', Revision::class);
+    Route::get('/', [RevisionArticleController::class, 'index']);
+    Route::post('/{article}', [RevisionArticleController::class, 'store'])->can('create', RevisionArticle::class);
+    Route::get('/{RevisionArticle}', [RevisionArticleController::class, 'show']);
+    Route::get('/list/{Article}', [RevisionArticleController::class, 'list']);
+    Route::post('/{RevisionArticle}', [RevisionArticleController::class, 'update'])->can('update', 'RevisionArticle');
+    Route::post('/review/{RevisionArticle}', [RevisionArticleController::class, 'review'])->can('update', 'RevisionArticle');
+    Route::post('/detail/{RevisionArticle}', [RevisionArticleController::class, 'updateDetails'])->can('update', 'RevisionArticle');
+    Route::delete('/', [RevisionArticleController::class, 'destroy'])->can('delete', RevisionArticle::class);
 });
