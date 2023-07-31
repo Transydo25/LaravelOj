@@ -40,6 +40,7 @@ class CategoryController extends BaseController
             $query = $query->where('name', 'LIKE', '%' . $search . '%');
         }
         $categories = $query->orderBy($sort_by, $sort)->paginate($limit);
+
         return $this->handleResponse($categories, 'Categories data');
     }
 
@@ -72,8 +73,9 @@ class CategoryController extends BaseController
         $category->posts = $category->posts()->where('status', 'published')->pluck('title');
         $upload_ids = json_decode($category->upload_id, true);
         if ($upload_ids) {
-            $category->uploads = DB::table('uploads')->whereIn('id', $upload_ids)->get();
+            $category->uploads = Upload::whereIn('id', $upload_ids)->get();
         }
+
         return $this->handleResponse($category, 'Category data');
     }
 
@@ -85,15 +87,16 @@ class CategoryController extends BaseController
         }
 
         $slug = Str::slug($request->name);
+
+        if ($request->upload_ids) {
+            $category->upload_id = json_encode($request->upload_ids);
+            handleUploads($request->upload_ids);
+        }
         $category->name = $request->name;
         $category->description = $request->description;
         $category->slug = $slug;
         $category->type = $request->type;
         $category->status = $request->status;
-        if ($request->upload_ids) {
-            $category->upload_id = json_encode($request->upload_ids);
-            handleUploads($request->upload_ids);
-        }
         $category->save();
 
         return $this->handleResponse($category, 'Category update successfully!');
@@ -122,7 +125,7 @@ class CategoryController extends BaseController
         return $this->handleResponse([], 'Category restored successfully!');
     }
 
-    public function deleteCategory(Request $request)
+    public function destroy(Request $request)
     {
         if (!Auth::user()->hasPermission('delete')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
@@ -142,7 +145,7 @@ class CategoryController extends BaseController
             if ($type === 'force_delete') {
                 $upload_ids = json_decode($category->upload_id, true);
                 if ($upload_ids) {
-                    $uploads = DB::table('uploads')->whereIn('id', $upload_ids)->get();
+                    $uploads = Upload::whereIn('id', $upload_ids)->get();
                 }
                 foreach ($uploads as $upload) {
                     Storage::delete($upload->path);
@@ -150,7 +153,7 @@ class CategoryController extends BaseController
                 }
                 $category->forceDelete();
             } else {
-                $category->status = 'deactive';
+                $category->status = 'inactive';
                 $category->save();
                 $category->delete();
             }

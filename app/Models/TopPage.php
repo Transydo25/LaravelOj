@@ -9,7 +9,7 @@ class TopPage extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'description', 'content', 'name', 'status', 'slug'];
+    protected $fillable = ['user_id', 'name', 'area', 'summary', 'status', 'about', 'upload_id', 'official_website', 'facebook_link', 'instagram_link',];
 
     public function topPageDetail()
     {

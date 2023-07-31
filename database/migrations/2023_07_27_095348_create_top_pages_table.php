@@ -17,8 +17,14 @@ class CreateTopPagesTable extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->string('name');
-            $table->string('description');
-            $table->string('content');
+            $table->string('area');
+            $table->text('about');
+            $table->text('summary');
+            $table->unsignedBigInteger('upload_id')->nullable();
+            $table->string('intro_video')->nullable();
+            $table->string('official_website')->nullable();
+            $table->string('facebook_link')->nullable();
+            $table->string('instagram_link')->nullable();
             $table->enum('status', ['active', 'inactive',])->default('inactive');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();

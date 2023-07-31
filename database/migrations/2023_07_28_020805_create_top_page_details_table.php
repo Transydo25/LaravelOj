@@ -17,8 +17,9 @@ class CreateTopPageDetailsTable extends Migration
             $table->id();
             $table->unsignedBigInteger('top_page_id');
             $table->string('name');
-            $table->string('description');
-            $table->string('content');
+            $table->string('area');
+            $table->text('about');
+            $table->text('summary');
             $table->string('lang')->default('en');
             $table->foreign('top_page_id')->references('id')->on('top_pages')->onDelete('cascade');
             $table->timestamps();

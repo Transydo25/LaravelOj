@@ -27,9 +27,9 @@ class ArticleStatus extends Mailable
         $subject = '';
 
         if ($this->status === 'published') {
-            $subject = 'Your article has been published';
+            $subject = 'Your request updated article has been published';
         } elseif ($this->status === 'reject') {
-            $subject = 'Your article has been rejected';
+            $subject = 'Your request update article has been rejected';
         }
 
         return $this->view('emails.article_status')

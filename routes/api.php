@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\RevisionArticleController;
+use App\Http\Controllers\Api\TopPageController;
 use App\Http\Controllers\VerifyEmailController;
 use App\Models\User;
 use App\Models\Post;
@@ -75,16 +76,13 @@ Route::post('/email/verify/resend', function (Request $request) {
     return back()->with('message', 'Verification link sent!');
 })->middleware(['auth:api', 'throttle:6,1'])->name('verification.send');
 
-//Media
+//Upload
 Route::group([
     'middleware' => ['jwt.verify', 'auth:api'],
     'prefix' => 'upload'
 ], function () {
-    Route::get('/', [UploadController::class, 'index']);
     Route::post('/', [UploadController::class, 'store']);
-    Route::get('/{media}', [UploadController::class, 'show']);
-    Route::post('/update', [UploadController::class, 'update']);
-    Route::delete('/{media}', [UploadController::class, 'destroy']);
+    Route::post('/video', [UploadController::class, 'uploadVideo']);
 });
 
 //Category
@@ -96,7 +94,7 @@ Route::group([
     Route::post('/', [CategoryController::class, 'store'])->can('create', Category::class);
     Route::get('/{category}', [CategoryController::class, 'show']);
     Route::post('/{category}', [CategoryController::class, 'update'])->can('update', 'category');
-    Route::put('/', [CategoryController::class, 'deleteCategory'])->can('delete', Category::class);
+    Route::put('/', [CategoryController::class, 'destroy'])->can('delete', Category::class);
     Route::put('/restore', [CategoryController::class, 'restore'])->can('restore', Category::class);
 });
 
@@ -141,4 +139,16 @@ Route::group([
     Route::post('/review/{RevisionArticle}', [RevisionArticleController::class, 'review'])->can('update', 'RevisionArticle');
     Route::post('/detail/{RevisionArticle}', [RevisionArticleController::class, 'updateDetails'])->can('update', 'RevisionArticle');
     Route::delete('/', [RevisionArticleController::class, 'destroy'])->can('delete', RevisionArticle::class);
+});
+
+//Top Page
+Route::group([
+    'middleware' => ['jwt.verify', 'auth:api'],
+    'prefix' => 'top_page'
+], function () {
+    Route::get('/', [TopPageController::class, 'index']);
+    Route::post('/', [TopPageController::class, 'store']);
+    Route::get('/{TopPage}', [TopPageController::class, 'show']);
+    Route::post('/{TopPage}', [TopPageController::class, 'update'])->can('update', 'TopPage');
+    Route::post('/detail/{TopPage}', [TopPageController::class, 'updateDetails'])->can('update', 'TopPage');
 });

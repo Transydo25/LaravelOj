@@ -312,7 +312,7 @@ class UserController extends BaseController
         $languages = config('app.languages');
 
         if ($request->status === 'reject') {
-            // Mail::to($author_email)->send(new revisionStatus($revision, 'reject', $request->reason));
+            Mail::to($author_email)->send(new ArticleStatus($article, 'reject', $request->reason));
             return $this->handleResponse($revision_article, 'reject successfully');
             $revision_article->status = 'draft';
         }
@@ -322,7 +322,6 @@ class UserController extends BaseController
         $article->content = $revision_article->content;
         if ($revision_article->upload_id) {
             $article->upload_id = json_encode($request->upload_ids);
-            handleUploads($request->upload_ids);
             $article->upload_id = $revision_article->upload_id;
         }
         $article->save();
@@ -346,8 +345,8 @@ class UserController extends BaseController
             }
         }
         $article->revisionArticle()->delete();
+        Mail::to($author_email)->send(new ArticleStatus($article, 'published'));
 
-        // Mail::to($author_email)->send(new revisionStatus($revision, 'published'));
         return $this->handleResponse([], 'published successfully');
     }
 }

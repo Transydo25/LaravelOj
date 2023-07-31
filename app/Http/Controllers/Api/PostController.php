@@ -119,9 +119,9 @@ class PostController extends BaseController
         }
         $post->categories = $post->categories()->where('status', 'active')->pluck('name');
         $post->post_meta = $post->postMeta()->get();
-        $upload_ids = json_decode($article->upload_id, true);
+        $upload_ids = json_decode($post->upload_id, true);
         if ($upload_ids) {
-            $post->uploads = DB::table('uploads')->whereIn('id', $upload_ids)->get();
+            $post->uploads = Upload::whereIn('id', $upload_ids)->get();
         }
         return $this->handleResponse($post, 'Post data details');
     }
