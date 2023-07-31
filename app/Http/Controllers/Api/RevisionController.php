@@ -8,17 +8,54 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Article;
 use App\Models\Revision;
 use App\Models\RevisionDetail;
+use App\Models\Upload;
 
 
 class RevisionController extends BaseController
 {
 
-    public function index()
+    public function index(Request $request)
     {
-        $revisions = Revision::select('*')
+        if (!$request->user()->hasPermission('update')) {
+            return  $this->handleError('Unauthorized', 403);
+        }
+
+        $status = $request->input('status');
+        $layout_status = ['published', 'pending'];
+        $languages = config('app.languages');
+        $sort = $request->input('sort');
+        $sort_types = ['desc', 'asc'];
+        $sort_option = ['title', 'created_at', 'updated_at', 'article_id'];
+        $sort_by = $request->input('sort_by');
+        $status = in_array($status, $layout_status) ? $status : 'published';
+        $sort = in_array($sort, $sort_types) ? $sort : 'desc';
+        $sort_by = in_array($sort_by, $sort_option) ? $sort_by : 'created_at';
+        $search = $request->input('query');
+        $limit = request()->input('limit') ?? config('app.paginate');
+        $language = $request->language;
+        $language = in_array($language, $languages) ? $language : '';
+        $article_id = $request->article_id;
+        $query = Revision::select('*')
             ->groupBy('article_id')
-            ->latest('version')
-            ->get();
+            ->latest('version');
+        if ($status) {
+            $query = $query->where('status', $status);
+        }
+        if ($article_id) {
+            $query = $query->where('article_id', $article_id);
+        }
+        if ($search) {
+            $query = $query->where('title', 'LIKE', '%' . $search . '%');
+        }
+        if ($language) {
+            $query = $query->whereHas('articleDetail', function ($q) use ($language) {
+                $q->where('language', $language);
+            });
+            $query = $query->with(['articleDetail' => function ($q) use ($language) {
+                $q->where('language', $language);
+            }]);
+        }
+        $revisions = $query->orderBy($sort_by, $sort)->paginate($limit);
 
         return $this->handleResponse($revisions, 'users data');
     }
@@ -55,9 +92,18 @@ class RevisionController extends BaseController
     }
 
 
-    public function show($id)
+    public function show(Request $request, Revision $revision)
     {
-        //
+        $language = $request->language;
+        if ($language) {
+            $revision->revision_detail = $revision->revisionDetail()->where('lang', $language)->get();
+        }
+        $revision->categories = $revision->category()->where('status', 'active')->pluck('name');
+        $upload_ids = json_decode($revision->upload_id, true);
+        if ($upload_ids) {
+            $revision->uploads = Upload::whereIn('id', $upload_ids)->get();
+        }
+        return $this->handleResponse($revision, 'article data details');
     }
 
 

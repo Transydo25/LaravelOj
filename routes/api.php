@@ -62,7 +62,7 @@ Route::group([
     Route::put('/restore', [UserController::class, 'restore'])->can('restore', User::class);
     Route::get('/meta', [UserController::class, 'profile']);
     Route::post('/approve/{article}', [UserController::class, 'approve'])->can('status', User::class);
-    Route::post('/revision/{revision}', [UserController::class, 'approveRevision']);
+    Route::post('/revision/{revision}', [UserController::class, 'approveRevision'])->can('status', User::class);
 });
 
 //Mail
