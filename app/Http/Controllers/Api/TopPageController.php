@@ -63,19 +63,18 @@ class TopPageController extends BaseController
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
-        // dd(Auth::user()->topPage);
-        if (!Auth::user()->topPage) {
-            return $this->handleResponse([], 'you already have the page, can not create more');
+        if (Auth::user()->topPage()->exists()) {
+            return $this->handleResponse([], 'You already have a top_page, cannot create more');
         }
 
         $request->validate([
-            'name' => 'required|string|max: 255',
-            'area' => 'required|string|max: 255',
-            'summary' => 'required|string|max: 200',
-            'about' => 'required|string|max: 1000',
-            'official_website' => 'nullable|url|max:255',
-            'facebook_link' => 'nullable|url|max:255',
-            'instagram_link' => 'nullable|url|max:255',
+            'area' => 'required|regex:/^[a-zA-Z0-9]+\/[a-zA-Z0-9]+$/',
+            'about' => 'required|string|max:200',
+            'summary' => 'required|string|max:1000',
+            'name' => 'required',
+            'facebook' => 'url|starts_with:https://www.facebook.com/',
+            'instagram' => 'url|starts_with:https://www.instagram.com/',
+            'official_website' => 'url',
             'status' => 'in:active,inactive',
         ]);
 
@@ -135,18 +134,22 @@ class TopPageController extends BaseController
         }
 
         $request->validate([
-            'name' => 'required|string|max: 255',
-            'area' => 'required|string|max: 255',
-            'summary' => 'required|string|max: 200',
-            'about' => 'required|string|max: 1000',
-            'official_website' => 'nullable|url|max:255',
-            'facebook_link' => 'nullable|url|max:255',
-            'instagram_link' => 'nullable|url|max:255',
+            'area' => 'required|regex:/^[a-zA-Z0-9]+\/[a-zA-Z0-9]+$/',
+            'about' => 'required|string|max:200',
+            'summary' => 'required|string|max:1000',
+            'name' => 'required',
+            'facebook' => 'url|starts_with:https://www.facebook.com/',
+            'instagram' => 'url|starts_with:https://www.instagram.com/',
+            'official_website' => 'url',
             'status' => 'in:active,inactive',
         ]);
 
         $languages = config('app.languages');
 
+        if ($request->upload_ids) {
+            $top_page->upload_id = json_encode($request->upload_ids);
+            handleUploads($request->upload_ids);
+        }
         $top_page->name = $request->name;
         $top_page->area = $request->area;
         $top_page->about = $request->about;
@@ -178,10 +181,10 @@ class TopPageController extends BaseController
         }
 
         $request->validate([
-            'name' => 'required|string|max: 255',
-            'area' => 'required|string|max: 255',
-            'summary' => 'required|string|max: 200',
-            'about' => 'required|string|max: 1000',
+            'area' => 'required|regex:/^[a-zA-Z0-9]+\/[a-zA-Z0-9]+$/',
+            'about' => 'required|string|max:200',
+            'summary' => 'required|string|max:1000',
+            'name' => 'required',
         ]);
 
         $language = $request->language;
