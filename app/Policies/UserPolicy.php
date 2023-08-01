@@ -49,4 +49,8 @@ class UserPolicy
     public function restore(User $user)
     {
     }
+
+    public function status(User $user)
+    {
+    }
 }

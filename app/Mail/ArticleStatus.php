@@ -28,8 +28,12 @@ class ArticleStatus extends Mailable
 
         if ($this->status === 'published') {
             $subject = 'Your request updated article has been published';
-        } elseif ($this->status === 'reject') {
+        }
+        if ($this->status === 'reject') {
             $subject = 'Your request update article has been rejected';
+        }
+        if ($this->status === 'pending') {
+            $subject = 'Request approved article by revision';
         }
 
         return $this->view('emails.article_status')

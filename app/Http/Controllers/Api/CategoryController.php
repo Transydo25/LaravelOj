@@ -13,7 +13,6 @@ use App\Models\Upload;
 use Illuminate\Support\Facades\DB;
 
 
-
 class CategoryController extends BaseController
 {
 
@@ -46,7 +45,7 @@ class CategoryController extends BaseController
 
     public function store(CategoryRequest $request, Category $category)
     {
-        if (!Auth::user()->hasPermission('create')) {
+        if (!$request->user()->hasPermission('create')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -82,7 +81,7 @@ class CategoryController extends BaseController
 
     public function update(CategoryRequest $request, Category $category)
     {
-        if (!Auth::user()->hasPermission('update')) {
+        if (!$request->user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -104,7 +103,7 @@ class CategoryController extends BaseController
 
     public function restore(Request $request)
     {
-        if (!Auth::user()->hasPermission('update')) {
+        if (!$request->user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -127,7 +126,7 @@ class CategoryController extends BaseController
 
     public function destroy(Request $request)
     {
-        if (!Auth::user()->hasPermission('delete')) {
+        if (!$request->user()->hasPermission('delete')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 

@@ -29,7 +29,7 @@ class UserController extends BaseController
 
     public function index(Request $request)
     {
-        if (!Auth::user()->hasPermission('read')) {
+        if (!$request->user()->hasPermission('read')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -53,7 +53,7 @@ class UserController extends BaseController
 
     public function create(Request $request)
     {
-        if (!Auth::user()->hasPermission('create')) {
+        if (!$request->user()->hasPermission('create')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
         $request->validate([
@@ -93,9 +93,9 @@ class UserController extends BaseController
         return $this->handleResponse($user, 'User successfully created')->setStatusCode(201);
     }
 
-    public function show(User $user)
+    public function show(Request $request, User $user)
     {
-        if (!Auth::user()->hasPermission('read')) {
+        if (!$request->user()->hasPermission('read')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
         $upload_ids = json_decode($user->upload_id, true);
@@ -121,8 +121,8 @@ class UserController extends BaseController
         ]);
 
         $user->name = $request->name;
-        $roleIds = $request->roles;
-        $user->roles()->sync($roleIds);
+        $role_ids = $request->roles;
+        $user->roles()->sync($role_ids);
         $user->password = bcrypt($request->new_password);
         if ($request->upload_ids) {
             $user->upload_id = json_encode($request->upload_ids);
@@ -132,11 +132,7 @@ class UserController extends BaseController
         if (!($request->has('meta_keys') && $request->has('meta_values'))) {
             return $this->handleResponse($user, 'User successfully created')->setStatusCode(201);
         }
-        $user_metas = $user->userMeta()->get();
-        foreach ($user_metas as $user_meta) {
-            $value = $user_meta->value;
-            $user_meta->delete();
-        }
+        $user->userMeta()->delete();
         $meta_keys = $request->meta_keys;
         $meta_values = $request->meta_values;
         foreach ($meta_keys as $index => $key) {
@@ -153,7 +149,7 @@ class UserController extends BaseController
 
     public function restore(Request $request)
     {
-        if (!Auth::user()->hasPermission('update')) {
+        if (!$request->user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -165,12 +161,13 @@ class UserController extends BaseController
 
         $ids = is_array($ids) ? $ids : [$ids];
         User::onlyTrashed()->whereIn('id', $ids)->restore();
+
         return $this->handleResponse([], 'User restored successfully!');
     }
 
     public function destroy(Request $request)
     {
-        if (!Auth::user()->hasPermission('delete')) {
+        if (!$request->user()->hasPermission('delete')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -188,7 +185,7 @@ class UserController extends BaseController
             if ($type === 'force_delete') {
                 $upload_ids = json_decode($user->upload_id, true);
                 if ($upload_ids) {
-                    $uploads = DB::table('uploads')->whereIn('id', $upload_ids)->get();
+                    $uploads = Upload::whereIn('id', $upload_ids)->get();
                 }
                 foreach ($uploads as $upload) {
                     Storage::delete($upload->path);
@@ -228,13 +225,14 @@ class UserController extends BaseController
                 $new_values = array_values(array_unique(array_merge($current_values, $favorite_post)));
                 $user_meta->value = json_encode($new_values);
                 $user_meta->save();
-            } else {
-                $user_meta = new UserMeta;
-                $user_meta->user_id = $user_id;
-                $user_meta->key = 'favorite_post';
-                $user_meta->value = json_encode($favorite_post);
-                $user_meta->save();
+
+                return $this->handleResponse([], 'Add favorite successfully');
             }
+            $user_meta = new UserMeta;
+            $user_meta->user_id = $user_id;
+            $user_meta->key = 'favorite_post';
+            $user_meta->value = json_encode($favorite_post);
+            $user_meta->save();
 
             return $this->handleResponse([], 'Add favorite successfully');
         }
@@ -244,7 +242,6 @@ class UserController extends BaseController
             }
             $stored_values = json_decode($user_meta->value, true);
             $updated_values = array_values(array_diff($stored_values, $favorite_post));
-
             $user_meta->value = json_encode($updated_values);
             $user_meta->save();
 
@@ -269,7 +266,7 @@ class UserController extends BaseController
 
     public function approve(Request $request, Article $article)
     {
-        if (!Auth::user()->hasPermission('update')) {
+        if (!$request->user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -298,7 +295,7 @@ class UserController extends BaseController
 
     public function approveRevisionArticle(Request $request, RevisionArticle $revision_article)
     {
-        if (!Auth::user()->hasPermission('update')) {
+        if (!$request->user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -314,7 +311,7 @@ class UserController extends BaseController
         if ($request->status === 'reject') {
             Mail::to($author_email)->send(new ArticleStatus($article, 'reject', $request->reason));
             return $this->handleResponse($revision_article, 'reject successfully');
-            $revision_article->status = 'draft';
+            $revision_article->status = 'pending';
         }
 
         $article->title = $revision_article->title;

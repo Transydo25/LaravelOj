@@ -14,49 +14,46 @@ class UploadController extends BaseController
 {
     private function resize($file, $type)
     {
-        $uploadedImage = Image::make($file);
-        $inputWidth = $uploadedImage->getWidth();
-        $inputHeight = $uploadedImage->getHeight();
-        $resizePattern = [
+        $uploaded_image = Image::make($file);
+        $input_width = $uploaded_image->getWidth();
+        $input_height = $uploaded_image->getHeight();
+        $resize_pattern = [
             '720x2000', '1280x2000', '480x2000', '330x2000', '200x2000', '100x2000', '300x300',
         ];
         $size = null;
-        $minDistance = PHP_INT_MAX;
+        $min_distance = PHP_INT_MAX;
 
         if ($type == 'avatar') {
-            $resizedImage = $uploadedImage->resize(300, 300);
+            $resized_image = $uploaded_image->resize(300, 300);
 
             return [
                 'width' => 300,
-                'image' => $resizedImage
+                'image' => $resized_image
             ];
         }
-
         if ($type == 'cover') {
-            $resizedImage = $uploadedImage->resize(1400, 500);
+            $resized_image = $uploaded_image->resize(1400, 500);
 
             return [
                 'width' => 1400,
-                'image' => $resizedImage
+                'image' => $resized_image
             ];
         }
-
-        foreach ($resizePattern as $pattern) {
+        foreach ($resize_pattern as $pattern) {
             list($width, $height) = explode('x', $pattern);
-            $distance = sqrt(pow($inputWidth - $width, 2) + pow($inputHeight - $height, 2));
+            $distance = sqrt(pow($input_width - $width, 2) + pow($input_height - $height, 2));
 
-            if ($distance < $minDistance) {
-                $minDistance = $distance;
+            if ($distance < $min_distance) {
+                $min_distance = $distance;
                 $size = $pattern;
             }
         }
-
         list($width, $height) = explode('x', $size);
-        $resizedImage = $uploadedImage->resize($width, $height);
+        $resized_image = $uploaded_image->resize($width, $height);
 
         return [
-            'width' => $resizedImage->getWidth(),
-            'image' => $resizedImage
+            'width' => $resized_image->getWidth(),
+            'image' => $resized_image
         ];
     }
 
@@ -80,10 +77,10 @@ class UploadController extends BaseController
         foreach ($images as $image) {
             $image_name = Str::random(10);
             $new_image = $this->resize($image, $type);
-            $resizedImage = $new_image['image'];
+            $resized_image = $new_image['image'];
             $width = $new_image['width'];
             $image_path = $path . '/' . $image_name;
-            $resizedImage->save(storage_path('app/' . $path . '/' . $image_name));
+            $resized_image->save(storage_path('app/' . $path . '/' . $image_name));
             $upload = new Upload;
             $upload->url = asset(Storage::url($image_path));
             $upload->path = $image_path;
@@ -116,7 +113,6 @@ class UploadController extends BaseController
         foreach ($videos as $video) {
             $video_name = Str::random(10);
             $video_path = $path . '/' . $video_name;
-            // $video->save(storage_path('app/' . $path . '/' . $video_name));
             $video->storeAs($path, $video_name . '.' . $video->Extension());
             $upload = new Upload;
             $upload->url = asset(Storage::url($video_path));

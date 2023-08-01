@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\UploadController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\RevisionArticleController;
 use App\Http\Controllers\Api\TopPageController;
+use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\VerifyEmailController;
 use App\Models\User;
 use App\Models\Post;
@@ -150,3 +151,6 @@ Route::group([
     Route::post('/{top_page}', [TopPageController::class, 'update'])->can('update', 'TopPage');
     Route::post('/detail/{top_page}', [TopPageController::class, 'updateDetails'])->can('update', 'TopPage');
 });
+
+//Dashboard 
+Route::get('/dashboard', [DashboardController::class, 'index']);

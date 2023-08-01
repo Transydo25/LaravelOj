@@ -62,7 +62,7 @@ class RevisionArticleController extends BaseController
 
     public function store(Request $request, Article $article)
     {
-        if (!Auth::user()->hasPermission('create')) {
+        if (!$request->user()->hasPermission('create')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -107,6 +107,7 @@ class RevisionArticleController extends BaseController
     public function show(Request $request, RevisionArticle $revision_article)
     {
         $language = $request->language;
+
         if ($language) {
             $revision_article->revision_article_detail = $revision_article->revisionArticleDetail()->where('lang', $language)->get();
         }
@@ -115,13 +116,14 @@ class RevisionArticleController extends BaseController
         if ($upload_ids) {
             $revision_article->uploads = Upload::whereIn('id', $upload_ids)->get();
         }
+
         return $this->handleResponse($revision_article, 'revision article data details');
     }
 
 
     public function update(Request $request, RevisionArticle $revision_article)
     {
-        if (!Auth::user()->hasPermission('update')) {
+        if (!$request->user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -149,14 +151,14 @@ class RevisionArticleController extends BaseController
             $revision_article_detail->lang = $language;
             $revision_article_detail->save();
         }
-        Mail::to('duybv1800@gmail.com')->send(new ArticleStatus($revision_article, 'pending'));
+        Mail::to(env('ADMIN_MAIL'))->send(new ArticleStatus($revision_article, 'pending'));
 
-        return $this->handleResponse($revision_article, 'revision_article updated successfully');
+        return $this->handleResponse($revision_article, 'Revision article updated successfully');
     }
 
     public function updateDetail(Request $request, RevisionArticle $revision_article)
     {
-        if (!Auth::user()->hasPermission('update')) {
+        if (!$request->user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -164,7 +166,6 @@ class RevisionArticleController extends BaseController
             'title' => 'required|string|max: 255',
             'content' => 'string',
             'description' => 'string',
-
         ]);
 
         $language = $request->language;
@@ -178,6 +179,6 @@ class RevisionArticleController extends BaseController
         $revision_article_detail->description = $request->description;
         $revision_article_detail->save();
 
-        return $this->handleResponse($revision_article_detail, 'revision_article detail updated successfully');
+        return $this->handleResponse($revision_article_detail, 'Revision article detail updated successfully');
     }
 }

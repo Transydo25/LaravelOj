@@ -91,7 +91,7 @@ class AuthController extends BaseController
             'new_password' => 'required|string|confirmed|min:6',
         ]);
 
-        $user = auth()->user();
+        $user = $request->user();
         $user->name = $request->name;
         $user->password = bcrypt($request->new_password);
         $user->save();

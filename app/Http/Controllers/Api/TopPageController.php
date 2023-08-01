@@ -13,57 +13,13 @@ use App\Models\Upload;
 class TopPageController extends BaseController
 {
 
-    public function index(Request $request)
-    {
-        $language = $request->input('language');
-        $languages = config('app.languages');
-        $language = in_array($language, $languages) ? $language : '';
-        $status = $request->input('status');
-        $layout_status = ['active', 'inactive'];
-        $sort = $request->input('sort');
-        $sort_types = ['desc', 'asc'];
-        $sort_option = ['name', 'created_at', 'updated_at'];
-        $sort_by = $request->input('sort_by');
-        $status = in_array($status, $layout_status) ? $status : 'active';
-        $sort = in_array($sort, $sort_types) ? $sort : 'desc';
-        $sort_by = in_array($sort_by, $sort_option) ? $sort_by : 'created_at';
-        $search = $request->input('query');
-        $limit = request()->input('limit') ?? config('app.paginate');
-        $query = TopPage::select('*');
-
-        if ($status) {
-            $query = $query->where('status', $status);
-        }
-        if ($search) {
-            $query = $query->where('title', 'LIKE', '%' . $search . '%');
-        }
-        if ($language) {
-            $query = $query->whereHas('TopPageDetail', function ($q) use ($language) {
-                $q->where('lang', $language);
-            });
-            $query = $query->with(['TopPageDetail' => function ($q) use ($language) {
-                $q->where('lang', $language);
-            }]);
-        }
-        $top_pages = $query->orderBy($sort_by, $sort)->paginate($limit);
-        foreach ($top_pages as $top_page) {
-            $upload_ids = json_decode($top_page->upload_id, true);
-            if ($upload_ids) {
-                $top_page->uploads = Upload::whereIn('id', $upload_ids)->get();
-            }
-        }
-
-        return $this->handleResponse($top_pages, 'TopPage data');
-    }
-
-
     public function store(Request $request)
     {
-        if (!Auth::user()->hasPermission('create')) {
+        if (!$request->user()->hasPermission('create')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
-        if (Auth::user()->topPage()->exists()) {
+        if ($request->user()->topPage()->exists()) {
             return $this->handleResponse([], 'You already have a top_page, cannot create more');
         }
 
@@ -129,7 +85,7 @@ class TopPageController extends BaseController
 
     public function update(Request $request, TopPage $top_page)
     {
-        if (!Auth::user()->hasPermission('update')) {
+        if (!$request->user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -176,7 +132,7 @@ class TopPageController extends BaseController
 
     public function updateDetails(Request $request, TopPage $top_page)
     {
-        if (!Auth::user()->hasPermission('update')) {
+        if (!$request->user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 

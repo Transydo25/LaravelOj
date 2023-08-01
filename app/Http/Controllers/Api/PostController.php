@@ -55,7 +55,7 @@ class PostController extends BaseController
 
     public function store(Request $request)
     {
-        if (!Auth::user()->hasPermission('create')) {
+        if (!$request->user()->hasPermission('create')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -71,7 +71,7 @@ class PostController extends BaseController
 
         $post = new Post;
         $slug = Str::slug($request->title);
-        $categoryIds = $request->categories;
+        $category_ids = $request->categories;
         $user_id = Auth::id();
         $languages = config('app.languages');
 
@@ -86,7 +86,7 @@ class PostController extends BaseController
         $post->slug = $slug;
         $post->author = $user_id;
         $post->save();
-        $post->categories()->sync($categoryIds);
+        $post->categories()->sync($category_ids);
         foreach ($languages as $language) {
             $post_detail = new PostDetail;
             $post_detail->title = translate($request->title, $language);
@@ -129,7 +129,7 @@ class PostController extends BaseController
 
     public function updateDetails(Request $request, Post $post)
     {
-        if (!Auth::user()->hasPermission('update')) {
+        if (!$request->user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -152,7 +152,7 @@ class PostController extends BaseController
 
     public function update(Request $request, Post $post)
     {
-        if (!Auth::user()->hasPermission('update')) {
+        if (!$request->user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -168,12 +168,12 @@ class PostController extends BaseController
 
         $value = $request->meta_value;
         $slug = Str::slug($request->title);
-        $categoryIds = $request->categories;
+        $category_ids = $request->categories;
         $languages = config('app.languages');
 
         $post->title = $request->title;
         $post->content = $request->content;
-        if ((Auth::user()->hasRole('editor') && Auth::id() == $post->author) || Auth::user()->hasRole('admin')) {
+        if (($request->user()->hasRole('editor') && Auth::id() == $post->author) || $request->user()->hasRole('admin')) {
             $post->status = $request->status;
         }
         $post->type = $request->type;
@@ -182,7 +182,7 @@ class PostController extends BaseController
             $post->upload_id = json_encode($request->upload_ids);
             handleUploads($request->upload_ids);
         }
-        $post->categories()->sync($categoryIds);
+        $post->categories()->sync($category_ids);
         $post->save();
         $post->postDetail()->delete();
         foreach ($languages as $language) {
@@ -194,10 +194,7 @@ class PostController extends BaseController
             $post_detail->save();
         }
         if ($request->has('meta_keys') && $request->has('meta_values')) {
-            $post_metas = $post->postMeta()->get();
-            foreach ($post_metas as $post_meta) {
-                $post_meta->delete();
-            }
+            $post->postMeta()->delete();
             $metaKeys = $request->meta_keys;
             $metaValues = $request->meta_values;
             foreach ($metaKeys as $index => $metaKey) {
@@ -216,7 +213,7 @@ class PostController extends BaseController
 
     public function restore(Request $request)
     {
-        if (!Auth::user()->hasPermission('update')) {
+        if (!$request->user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -239,7 +236,7 @@ class PostController extends BaseController
 
     public function deletePost(Request $request)
     {
-        if (!Auth::user()->hasPermission('delete')) {
+        if (!$request->user()->hasPermission('delete')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -257,7 +254,7 @@ class PostController extends BaseController
             if ($type === 'force_delete') {
                 $upload_ids = json_decode($post->upload_id, true);
                 if ($upload_ids) {
-                    $uploads = DB::table('uploads')->whereIn('id', $upload_ids)->get();
+                    $uploads = Upload::whereIn('id', $upload_ids)->get();
                 }
                 foreach ($uploads as $upload) {
                     Storage::delete($upload->path);

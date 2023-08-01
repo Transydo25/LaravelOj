@@ -54,7 +54,7 @@ class ArticleController extends BaseController
 
     public function store(Request $request)
     {
-        if (!Auth::user()->hasPermission('create')) {
+        if (!$request->user()->hasPermission('create')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -104,6 +104,7 @@ class ArticleController extends BaseController
     public function show(Request $request, Article $article)
     {
         $language = $request->language;
+
         if ($language) {
             $article->article_detail = $article->articleDetail()->where('lang', $language)->get();
         }
@@ -112,12 +113,13 @@ class ArticleController extends BaseController
         if ($upload_ids) {
             $article->uploads = Upload::whereIn('id', $upload_ids)->get();
         }
+
         return $this->handleResponse($article, 'Article data details');
     }
 
     public function update(Request $request, Article $article)
     {
-        if (!Auth::user()->hasPermission('update')) {
+        if (!$request->user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
         if ($article->status == 'published') {
@@ -161,7 +163,7 @@ class ArticleController extends BaseController
 
     public function updateDetails(Request $request, Article $article)
     {
-        if (!Auth::user()->hasPermission('update')) {
+        if (!$request->user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
         if ($article->status == 'published') {
@@ -191,7 +193,7 @@ class ArticleController extends BaseController
 
     public function restore(Request $request)
     {
-        if (!Auth::user()->hasPermission('update')) {
+        if (!$request->user()->hasPermission('update')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
@@ -214,7 +216,7 @@ class ArticleController extends BaseController
 
     public function deleteArticle(Request $request)
     {
-        if (!Auth::user()->hasPermission('delete')) {
+        if (!$request->user()->hasPermission('delete')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
 
