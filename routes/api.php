@@ -18,7 +18,8 @@ use App\Models\Category;
 use App\Models\Article;
 use App\Models\RevisionArticle;
 
-
+use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\OrderController;
 
 
 
@@ -49,25 +50,6 @@ Route::group([
     Route::post('/update', [AuthController::class, 'update']);
 });
 
-Route::group([
-    'middleware' => ['jwt.verify', 'auth:api'],
-    'prefix' => 'user'
-], function () {
-    //Favorites
-    Route::get('/', [UserController::class, 'index'])->can('viewAny', User::class);
-    Route::get('/favorite', [UserController::class, 'showFavorite']);
-    Route::post('/favorite', [UserController::class, 'manageFavorite']);
-    //User
-    Route::post('/', [UserController::class, 'create'])->can('create', User::class);
-    Route::get('/{user}', [UserController::class, 'show'])->can('view', 'user');
-    Route::post('/{user}', [UserController::class, 'update'])->can('update', 'user');
-    Route::put('/', [UserController::class, 'destroy'])->can('delete', 'user');
-    Route::put('/restore', [UserController::class, 'restore'])->can('restore', User::class);
-    Route::get('/meta', [UserController::class, 'profile']);
-    Route::post('/approve/{article}', [UserController::class, 'approve'])->can('status', User::class);
-    Route::post('/revisionArticle/{revisionArticle}', [UserController::class, 'approveRevisionArticle'])->can('status', User::class);
-});
-
 //Mail
 Route::get('/email/verify/{id}/{hash}', [VerifyEmailController::class, 'verifyEmail'])
     ->middleware(['auth', 'signed'])->name('verification.verify');
@@ -75,82 +57,61 @@ Route::get('/email/verify/{id}/{hash}', [VerifyEmailController::class, 'verifyEm
 Route::post('/email/verify/resend', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
     return back()->with('message', 'Verification link sent!');
-})->middleware(['auth:api', 'throttle:6,1'])->name('verification.send');
+})->middleware(['auth:api', 'throttle:6,1']);
 
-//Upload
+
 Route::group([
     'middleware' => ['jwt.verify', 'auth:api'],
-    'prefix' => 'upload'
 ], function () {
-    Route::post('/', [UploadController::class, 'store']);
-    Route::post('/video', [UploadController::class, 'uploadVideo']);
+    //User
+    Route::get('/user', [UserController::class, 'index'])->can('viewAny', User::class);
+    Route::get('/user/favorite', [UserController::class, 'showFavorite']);
+    Route::post('/user/favorite', [UserController::class, 'manageFavorite']);
+    Route::post('/user', [UserController::class, 'create'])->can('create', User::class);
+    Route::get('/user/{user}', [UserController::class, 'show'])->can('view', 'user');
+    Route::post('/user/{user}', [UserController::class, 'update'])->can('update', 'user');
+    Route::delete('/user', [UserController::class, 'destroy'])->can('delete', User::class);
+    Route::put('/user/restore', [UserController::class, 'restore'])->can('restore', User::class);
+    Route::post('/user/approve/{article}', [UserController::class, 'approve'])->can('status', User::class);
+    Route::post('/user/revision_article/{revision_article}', [UserController::class, 'approveRevisionArticle'])->can('status', User::class);
+    //Upload
+    Route::post('/upload', [UploadController::class, 'store']);
+    Route::post('/upload/video', [UploadController::class, 'uploadVideo']);
+    //Category
+    Route::get('/category', [CategoryController::class, 'index']);
+    Route::post('/category', [CategoryController::class, 'store'])->can('create', Category::class);
+    Route::get('/category/{category}', [CategoryController::class, 'show']);
+    Route::post('/category/{category}', [CategoryController::class, 'update'])->can('update', 'category');
+    Route::delete('/category', [CategoryController::class, 'destroy'])->can('delete', Category::class);
+    Route::put('/category/restore', [CategoryController::class, 'restore'])->can('restore', Category::class);
+    //Post
+    Route::get('/post', [PostController::class, 'index']);
+    Route::post('/post', [PostController::class, 'store'])->can('create', Post::class);
+    Route::get('/post/{post}', [PostController::class, 'show']);
+    Route::post('/post/{post}', [PostController::class, 'update'])->can('update', 'post');
+    Route::post('/post/detail/{post}', [PostController::class, 'updateDetails'])->can('update', 'post');
+    Route::delete('/post', [PostController::class, 'destroy'])->can('delete', Post::class);
+    Route::put('/post/restore', [PostController::class, 'restore'])->can('restore', Post::class);
+    //Article
+    Route::get('/article', [ArticleController::class, 'index']);
+    Route::post('/article', [ArticleController::class, 'store'])->can('create', Article::class);
+    Route::get('/article/{article}', [ArticleController::class, 'show']);
+    Route::post('/article/{article}', [ArticleController::class, 'update'])->can('update', 'article');
+    Route::post('/article/detail/{article}', [ArticleController::class, 'updateDetails'])->can('update', 'article');
+    Route::delete('/article', [ArticleController::class, 'destroy'])->can('delete', Article::class);
+    Route::put('/article/restore', [ArticleController::class, 'restore'])->can('restore', Article::class);
+    //RevisionArticle
+    Route::get('/revision_article', [RevisionArticleController::class, 'index']);
+    Route::post('/revision_article/{article}', [RevisionArticleController::class, 'store'])->can('create', RevisionArticle::class);
+    Route::get('/revision_article/{revision_article}', [RevisionArticleController::class, 'show']);
+    Route::get('/revision_article/list/{article}', [RevisionArticleController::class, 'list']);
+    Route::post('/revision_article/update/{revision_article}', [RevisionArticleController::class, 'update'])->can('update', 'revision_article');
+    Route::post('/revision_article/detail/{revision_article}', [RevisionArticleController::class, 'updateDetail'])->can('update', RevisionArticle::class);
+    //TopPage
+    Route::post('/top_page', [TopPageController::class, 'store']);
+    Route::get('/top_page/{top_page}', [TopPageController::class, 'show']);
+    Route::post('/top_page/{top_page}', [TopPageController::class, 'update'])->can('update', 'top_page');
+    Route::post('/top_page/detail/{top_page}', [TopPageController::class, 'updateDetails'])->can('update', 'top_page');
+    //Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 });
-
-//Category
-Route::group([
-    'middleware' => ['jwt.verify', 'auth:api'],
-    'prefix' => 'category'
-], function () {
-    Route::get('/', [CategoryController::class, 'index']);
-    Route::post('/', [CategoryController::class, 'store'])->can('create', Category::class);
-    Route::get('/{category}', [CategoryController::class, 'show']);
-    Route::post('/{category}', [CategoryController::class, 'update'])->can('update', 'category');
-    Route::put('/', [CategoryController::class, 'destroy'])->can('delete', Category::class);
-    Route::put('/restore', [CategoryController::class, 'restore'])->can('restore', Category::class);
-});
-
-//Post
-Route::group([
-    'middleware' => ['jwt.verify', 'auth:api'],
-    'prefix' => 'post'
-], function () {
-    Route::get('/', [PostController::class, 'index']);
-    Route::post('/', [PostController::class, 'store'])->can('create', Post::class);
-    Route::get('/{post}', [PostController::class, 'show']);
-    Route::post('/{post}', [PostController::class, 'update'])->can('update', 'post');
-    Route::post('/detail/{post}', [PostController::class, 'updateDetails'])->can('update', 'post');
-    Route::put('/', [PostController::class, 'deletePost'])->can('delete', Post::class);
-    Route::put('/restore', [PostController::class, 'restore'])->can('restore', Post::class);
-});
-
-//Article
-Route::group([
-    'middleware' => ['jwt.verify', 'auth:api'],
-    'prefix' => 'article'
-], function () {
-    Route::get('/', [ArticleController::class, 'index']);
-    Route::post('/', [ArticleController::class, 'store'])->can('create', Article::class);
-    Route::get('/{article}', [ArticleController::class, 'show']);
-    Route::post('/{article}', [ArticleController::class, 'update'])->can('update', 'article');
-    Route::post('/detail/{article}', [ArticleController::class, 'updateDetails'])->can('update', 'article');
-    Route::put('/', [ArticleController::class, 'deleteArticle'])->can('delete', Article::class);
-    Route::put('/restore', [ArticleController::class, 'restore'])->can('restore', Article::class);
-});
-
-//RevisionArticle
-Route::group([
-    'middleware' => ['jwt.verify', 'auth:api'],
-    'prefix' => 'revisionArticle'
-], function () {
-    Route::get('/', [RevisionArticleController::class, 'index']);
-    Route::post('/{article}', [RevisionArticleController::class, 'store'])->can('create', RevisionArticle::class);
-    Route::get('/{RevisionArticle}', [RevisionArticleController::class, 'show']);
-    Route::get('/list/{Article}', [RevisionArticleController::class, 'list']);
-    Route::post('/{RevisionArticle}', [RevisionArticleController::class, 'update'])->can('update', 'RevisionArticle');
-    Route::post('/detail/{RevisionArticle}', [RevisionArticleController::class, 'updateDetails'])->can('update', 'RevisionArticle');
-});
-
-//Top Page
-Route::group([
-    'middleware' => ['jwt.verify', 'auth:api'],
-    'prefix' => 'top_page'
-], function () {
-    Route::get('/', [TopPageController::class, 'index']);
-    Route::post('/', [TopPageController::class, 'store']);
-    Route::get('/{top_page}', [TopPageController::class, 'show']);
-    Route::post('/{top_page}', [TopPageController::class, 'update'])->can('update', 'TopPage');
-    Route::post('/detail/{top_page}', [TopPageController::class, 'updateDetails'])->can('update', 'TopPage');
-});
-
-//Dashboard 
-Route::get('/dashboard', [DashboardController::class, 'index']);

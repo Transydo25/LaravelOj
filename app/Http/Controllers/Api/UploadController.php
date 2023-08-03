@@ -108,7 +108,7 @@ class UploadController extends BaseController
         $user_id = Auth::id();
 
         if (!Storage::exists($path)) {
-            Storage::makeDirectory($path, 0777, true, true);
+            Storage::makeDirectory($path, 0755, true, true);
         }
         foreach ($videos as $video) {
             $video_name = Str::random(10);

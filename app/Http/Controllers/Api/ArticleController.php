@@ -40,9 +40,6 @@ class ArticleController extends BaseController
             $query = $query->where('title', 'LIKE', '%' . $search . '%');
         }
         if ($language) {
-            $query = $query->whereHas('articleDetail', function ($q) use ($language) {
-                $q->where('lang', $language);
-            });
             $query = $query->with(['articleDetail' => function ($q) use ($language) {
                 $q->where('lang', $language);
             }]);
@@ -174,7 +171,6 @@ class ArticleController extends BaseController
             'title' => 'required|string|max: 255',
             'content' => 'string',
             'description' => 'string',
-
         ]);
 
         $language = $request->language;
@@ -214,7 +210,7 @@ class ArticleController extends BaseController
         return $this->handleResponse([], 'Article restored successfully!');
     }
 
-    public function deleteArticle(Request $request)
+    public function destroy(Request $request)
     {
         if (!$request->user()->hasPermission('delete')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);

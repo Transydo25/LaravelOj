@@ -27,10 +27,4 @@ class RevisionArticlePolicy
     {
         return $user->hasRole('editor') || $user->id === $revision_article->user_id;
     }
-
-
-    public function delete(User $user, RevisionArticle $revision_article)
-    {
-        //
-    }
 }

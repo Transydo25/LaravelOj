@@ -170,7 +170,6 @@ class UserController extends BaseController
         if (!$request->user()->hasPermission('delete')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
         }
-
         $request->validate([
             'ids' => 'required',
             'type' => 'required|in:delete,force_delete',
@@ -186,10 +185,10 @@ class UserController extends BaseController
                 $upload_ids = json_decode($user->upload_id, true);
                 if ($upload_ids) {
                     $uploads = Upload::whereIn('id', $upload_ids)->get();
-                }
-                foreach ($uploads as $upload) {
-                    Storage::delete($upload->path);
-                    $upload->delete();
+                    foreach ($uploads as $upload) {
+                        Storage::delete($upload->path);
+                        $upload->delete();
+                    }
                 }
                 $user->forceDelete();
             } else {
@@ -208,13 +207,12 @@ class UserController extends BaseController
     {
         $request->validate([
             'type' => 'required|in:add,sub',
-            'meta_data' => 'required|array',
-            'meta_data.favorite_post' => 'required|array',
+            'meta_values' => 'required|array',
         ]);
 
         $user_id = Auth::id();
         $type = $request->type;
-        $favorite_post = $request->meta_data['favorite_post'];
+        $values = $request->meta_values;
         $user_meta = UserMeta::where('user_id', $user_id)
             ->where('key', 'favorite_post')
             ->first();
@@ -222,7 +220,7 @@ class UserController extends BaseController
         if ($type === 'add') {
             if ($user_meta) {
                 $current_values = json_decode($user_meta->value, true);
-                $new_values = array_values(array_unique(array_merge($current_values, $favorite_post)));
+                $new_values = array_values(array_unique(array_merge($current_values, $values)));
                 $user_meta->value = json_encode($new_values);
                 $user_meta->save();
 
@@ -231,7 +229,7 @@ class UserController extends BaseController
             $user_meta = new UserMeta;
             $user_meta->user_id = $user_id;
             $user_meta->key = 'favorite_post';
-            $user_meta->value = json_encode($favorite_post);
+            $user_meta->value = json_encode($values);
             $user_meta->save();
 
             return $this->handleResponse([], 'Add favorite successfully');
@@ -241,7 +239,7 @@ class UserController extends BaseController
                 return $this->handleResponse([], 'UserMeta record not found');
             }
             $stored_values = json_decode($user_meta->value, true);
-            $updated_values = array_values(array_diff($stored_values, $favorite_post));
+            $updated_values = array_values(array_diff($stored_values, $values));
             $user_meta->value = json_encode($updated_values);
             $user_meta->save();
 
@@ -314,6 +312,7 @@ class UserController extends BaseController
             $revision_article->status = 'pending';
         }
 
+        $category_ids = json_decode($revision_article->category_ids);
         $article->title = $revision_article->title;
         $article->description = $revision_article->description;
         $article->content = $revision_article->content;
@@ -321,6 +320,7 @@ class UserController extends BaseController
             $article->upload_id = json_encode($request->upload_ids);
             $article->upload_id = $revision_article->upload_id;
         }
+        $article->category()->sync($category_ids);
         $article->save();
         foreach ($languages as $language) {
             $revision_article_detail = $revision_article->revisionArticleDetail->where('lang', $language)->first();

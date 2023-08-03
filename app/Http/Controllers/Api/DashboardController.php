@@ -15,7 +15,7 @@ class DashboardController extends BaseController
     {
         $total_categories = Category::count();
         $total_posts = Post::count();
-        $total_articles = Article::count();
+        $total_article = Article::count();
 
         $categories = Category::withCount(['posts', 'articles'])
             ->where('status', 'active')
@@ -49,7 +49,7 @@ class DashboardController extends BaseController
         $data = [
             'total_categories' => $total_categories,
             'total_posts' => $total_posts,
-            'total_articles' => $total_articles,
+            'total_article' => $total_article,
             'categories' => $categories,
             'posts' => $posts,
             'articles' => $articles,

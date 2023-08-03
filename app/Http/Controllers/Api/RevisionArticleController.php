@@ -29,7 +29,7 @@ class RevisionArticleController extends BaseController
         $sort_types = ['desc', 'asc'];
         $sort_option = ['title', 'created_at', 'updated_at', 'article_id'];
         $sort_by = $request->input('sort_by');
-        $status = in_array($status, $layout_status) ? $status : 'published';
+        $status = in_array($status, $layout_status) ? $status : 'pending';
         $sort = in_array($sort, $sort_types) ? $sort : 'desc';
         $sort_by = in_array($sort_by, $sort_option) ? $sort_by : 'created_at';
         $search = $request->input('query');
@@ -48,9 +48,6 @@ class RevisionArticleController extends BaseController
             $query = $query->where('title', 'LIKE', '%' . $search . '%');
         }
         if ($language) {
-            $query = $query->whereHas('articleDetail', function ($q) use ($language) {
-                $q->where('language', $language);
-            });
             $query = $query->with(['articleDetail' => function ($q) use ($language) {
                 $q->where('language', $language);
             }]);
@@ -77,6 +74,7 @@ class RevisionArticleController extends BaseController
         $revision_article->version = $article->revisionArticle()->where('article_id', $article->id)->count() + 1;
         $revision_article->user_id = $article->user_id;
         $revision_article->status = 'pending';
+        $revision_article->category_ids = $article->category()->select('categories.id')->pluck('id');
         $revision_article->save();
         foreach ($languages as $language) {
             $revision_article_detail = new RevisionArticleDetail;
@@ -111,7 +109,6 @@ class RevisionArticleController extends BaseController
         if ($language) {
             $revision_article->revision_article_detail = $revision_article->revisionArticleDetail()->where('lang', $language)->get();
         }
-        $revision_article->categories = $revision_article->category()->where('status', 'active')->pluck('name');
         $upload_ids = json_decode($revision_article->upload_id, true);
         if ($upload_ids) {
             $revision_article->uploads = Upload::whereIn('id', $upload_ids)->get();
@@ -131,6 +128,7 @@ class RevisionArticleController extends BaseController
             'title' => 'required|string|max: 255',
             'content' => 'string',
             'description' => 'string',
+            'category_ids' => 'array',
         ]);
 
         $languages = config('app.languages');
@@ -142,13 +140,16 @@ class RevisionArticleController extends BaseController
         $revision_article->title = $request->title;
         $revision_article->description = $request->description;
         $revision_article->content = $request->content;
+        $revision_article->category_ids = json_encode($request->category_ids);
         $revision_article->save();
+        $revision_article->revisionArticleDetail()->delete();
         foreach ($languages as $language) {
             $revision_article_detail = new RevisionArticleDetail;
             $revision_article_detail->title = Translate($revision_article->title, $language);
             $revision_article_detail->content = Translate($revision_article->content, $language);
             $revision_article_detail->description = Translate($revision_article->description, $language);
             $revision_article_detail->lang = $language;
+            $revision_article_detail->revision_article_id = $revision_article->id;
             $revision_article_detail->save();
         }
         Mail::to(env('ADMIN_MAIL'))->send(new ArticleStatus($revision_article, 'pending'));

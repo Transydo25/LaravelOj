@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class TopPageDetail extends Model
 {
     use HasFactory;
-    protected $fillable = ['title', 'description', 'content', 'lang'];
+    protected $fillable = ['name', 'area', 'summary', 'about', 'lang'];
 
     public function topPage()
     {

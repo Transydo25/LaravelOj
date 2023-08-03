@@ -41,9 +41,6 @@ class PostController extends BaseController
             $query = $query->where('title', 'LIKE', '%' . $search . '%');
         }
         if ($language) {
-            $query = $query->whereHas('postDetail', function ($q) use ($language) {
-                $q->where('lang', $language);
-            });
             $query = $query->with(['postDetail' => function ($q) use ($language) {
                 $q->where('lang', $language);
             }]);
@@ -234,7 +231,7 @@ class PostController extends BaseController
         return $this->handleResponse([], 'Post restored successfully!');
     }
 
-    public function deletePost(Request $request)
+    public function destroy(Request $request)
     {
         if (!$request->user()->hasPermission('delete')) {
             return $this->handleResponse([], 'Unauthorized')->setStatusCode(403);
