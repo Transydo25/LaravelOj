@@ -10,7 +10,6 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Upload;
-use Illuminate\Support\Facades\DB;
 
 
 class CategoryController extends BaseController
@@ -29,7 +28,6 @@ class CategoryController extends BaseController
         $sort_by = in_array($sort_by, $sort_option) ? $sort_by : 'created_at';
         $search = $request->input('query');
         $limit = request()->input('limit') ?? config('app.paginate');
-
         $query = Category::select('*');
 
         if ($status) {

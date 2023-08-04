@@ -11,8 +11,6 @@ use App\Models\Upload;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-
 
 class PostController extends BaseController
 {
@@ -105,12 +103,14 @@ class PostController extends BaseController
             $post_meta->value = $value;
             $post_meta->save();
         }
+
         return $this->handleResponse($post, 'Post created successfully');
     }
 
     public function show(Request $request, Post $post)
     {
         $language = $request->language;
+
         if ($language) {
             $post->post_detail = $post->postDetail()->where('lang', $language)->get();
         }
@@ -120,6 +120,7 @@ class PostController extends BaseController
         if ($upload_ids) {
             $post->uploads = Upload::whereIn('id', $upload_ids)->get();
         }
+
         return $this->handleResponse($post, 'Post data details');
     }
 
@@ -144,6 +145,7 @@ class PostController extends BaseController
         $post_detail->title = $request->title;
         $post_detail->content = $request->content;
         $post_detail->save();
+
         return $this->handleResponse($post_detail, 'Post detail updated successfully');
     }
 

@@ -10,15 +10,11 @@ use App\Models\Post;
 use App\Models\Upload;
 use App\Traits\HasPermission;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ArticleStatus;
 use App\Models\Article;
-use App\Models\ArticleDetail;
 use App\Models\RevisionArticle;
-use App\Models\RevisionArticleDetail;
-
 use Illuminate\Support\Facades\DB;
 
 
@@ -71,12 +67,12 @@ class UserController extends BaseController
             $user->upload_id = json_encode($request->upload_ids);
             handleUploads($request->upload_ids);
         }
-        $roleIds = $request->roles;
+        $role_ids = $request->roles;
         $user->name = $request->name;
         $user->email = $request->email;
         $user->password = bcrypt($request->password);
         $user->save();
-        $user->roles()->sync($roleIds);
+        $user->roles()->sync($role_ids);
         if (!($request->has('meta_keys') && $request->has('meta_values'))) {
             return $this->handleResponse($user, 'User successfully created')->setStatusCode(201);
         }
@@ -100,7 +96,7 @@ class UserController extends BaseController
         }
         $upload_ids = json_decode($user->upload_id, true);
         if ($upload_ids) {
-            $user->uploads = DB::table('uploads')->whereIn('id', $upload_ids)->get();
+            $user->uploads = Upload::whereIn('id', $upload_ids)->get();
         }
         return $this->handleResponse($user, 'User data details');
     }

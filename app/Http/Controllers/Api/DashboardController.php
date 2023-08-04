@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\BaseController;
-use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Post;
 use App\Models\Article;
@@ -28,7 +27,6 @@ class DashboardController extends BaseController
                 $category->uploads = Upload::whereIn('id', $upload_ids)->get();
             }
         }
-
         $posts = Post::latest()->where('status', 'published')->limit(10)->get();
         foreach ($posts as $post) {
             $post->post_meta = $post->postMeta()->get();
@@ -37,7 +35,6 @@ class DashboardController extends BaseController
                 $post->uploads = Upload::whereIn('id', $upload_ids)->get();
             }
         }
-
         $articles = Article::latest()->where('status', 'published')->limit(10)->get();
         foreach ($articles as $article) {
             $upload_ids = json_decode($article->upload_id, true);
@@ -45,7 +42,6 @@ class DashboardController extends BaseController
                 $article->uploads = Upload::whereIn('id', $upload_ids)->get();
             }
         }
-
         $data = [
             'total_categories' => $total_categories,
             'total_posts' => $total_posts,

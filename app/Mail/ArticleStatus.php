@@ -25,7 +25,6 @@ class ArticleStatus extends Mailable
     public function build()
     {
         $subject = '';
-
         if ($this->status === 'published') {
             $subject = 'Your request updated article has been published';
         }

@@ -18,11 +18,6 @@ use App\Models\Category;
 use App\Models\Article;
 use App\Models\RevisionArticle;
 
-use App\Http\Controllers\Api\CartController;
-use App\Http\Controllers\Api\OrderController;
-
-
-
 /*
 |--------------------------------------------------------------------------
 | API Routes

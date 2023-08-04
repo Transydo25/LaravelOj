@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Upload;
-use Illuminate\Support\Facades\DB;
 
 
 class ArticleController extends BaseController

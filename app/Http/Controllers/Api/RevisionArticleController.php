@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\BaseController;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Article;
 use App\Models\RevisionArticle;
 use App\Models\RevisionArticleDetail;
